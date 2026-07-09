@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { supabase } from "@/services/supabase";
 import { getProjects } from "@/services/projects";
@@ -9,6 +10,8 @@ import { Project } from "@/types/project";
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
 
   useEffect(() => {
     loadProjects();
@@ -24,7 +27,6 @@ export default function ProjectsPage() {
       return;
     }
 
-    // Пока берем первую компанию пользователя
     const { data: company } = await supabase
       .from("companies")
       .select("id")
@@ -48,19 +50,17 @@ export default function ProjectsPage() {
       <div className="mx-auto max-w-5xl">
 
         <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">
+            📁 Мои проекты
+          </h1>
 
-  <h1 className="text-3xl font-bold">
-    📁 Мои проекты
-  </h1>
-
-  <a
-    href="/projects/new"
-    className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
-  >
-    + Новый проект
-  </a>
-
-</div>
+          <a
+            href="/projects/new"
+            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
+          >
+            + Новый проект
+          </a>
+        </div>
 
         {loading && (
           <p className="mt-8">Загрузка...</p>
@@ -77,7 +77,8 @@ export default function ProjectsPage() {
           {projects.map((project) => (
             <div
               key={project.id}
-              className="rounded-xl bg-white p-6 shadow"
+              onClick={() => router.push(`/projects/${project.id}`)}
+              className="cursor-pointer rounded-xl bg-white p-6 shadow transition hover:shadow-md"
             >
               <h2 className="text-xl font-semibold">
                 {project.title}

@@ -1,6 +1,14 @@
 import { supabase } from "@/services/supabase";
 import { Project } from "@/types/project";
 
+export async function getProject(id: string) {
+  return await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", id)
+    .single();
+}
+
 export async function createProject(
   project: Omit<Project, "id" | "created_at" | "updated_at">
 ) {
@@ -17,14 +25,6 @@ export async function getProjects(companyId: string) {
     .select("*")
     .eq("company_id", companyId)
     .order("created_at", { ascending: false });
-}
-
-export async function getProject(id: string) {
-  return await supabase
-    .from("projects")
-    .select("*")
-    .eq("id", id)
-    .single();
 }
 
 export async function updateProject(
