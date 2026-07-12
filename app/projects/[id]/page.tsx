@@ -1,200 +1,126 @@
 "use client";
 
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function ProjectExecutionPage() {
-  const [project, setProject] = useState<any>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
+import { getProject } from "@/services/projects";
+import type { Project } from "@/types/project";
+
+export default function ProjectDetailPage() {
+  const params = useParams<{ id: string }>();
+  const projectId = params.id;
+
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [activeTask, setActiveTask] = useState<any>(null);
-
-  // 🟢 LOAD PROJECT
   useEffect(() => {
-    async function loadProject() {
-      try {
-        const res = await fetch("/api/projects/current");
-        const data = await res.json();
+    let isActive = true;
 
-        setProject(data.project);
-        setTasks(data.tasks || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+    void getProject(projectId).then(({ data, error: loadError }) => {
+      if (!isActive) {
+        return;
       }
-    }
 
-    loadProject();
-  }, []);
+      if (loadError) {
+        setError(loadError.message);
+        setProject(null);
+      } else {
+        setProject(data as Project);
+        setError(null);
+      }
 
-  // 🟢 AI TASK GENERATION
-  async function handleAIGenerate() {
-    if (!aiPrompt.trim()) return;
-
-    setAiLoading(true);
-
-    try {
-      const res = await fetch("/api/ai/generate-tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: aiPrompt,
-          projectId: project?.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      setTasks((prev) => [...prev, ...(data.tasks || [])]);
-      setAiPrompt("");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  // 🟢 RUN AGENTS CHECK
-  async function runAgents(task: any) {
-    const res = await fetch("/api/agents/task-check", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        task,
-      }),
+      setLoading(false);
     });
 
-    return await res.json();
-  }
-
-  // 🟢 EXECUTE TASK FLOW
-  async function executeTask(task: any) {
-    setActiveTask(task);
-
-    const agentResult = await runAgents(task);
-
-    console.log("AGENT RESULT:", agentResult);
-
-    // here later: human-in-loop + execution engine
-  }
+    return () => {
+      isActive = false;
+    };
+  }, [projectId]);
 
   if (loading) {
-    return <div className="p-6">Loading project...</div>;
+    return <main className="p-8">Загрузка заявки...</main>;
+  }
+
+  if (error || !project) {
+    return (
+      <main className="mx-auto max-w-3xl p-8">
+        <div className="rounded-xl border bg-white p-6 shadow">
+          <h1 className="text-2xl font-bold">Заявка не найдена</h1>
+          <p className="mt-3 text-gray-600">
+            {error ?? "Запрошенная заявка недоступна."}
+          </p>
+          <Link
+            href="/projects"
+            className="mt-6 inline-block rounded-lg bg-slate-900 px-4 py-2 text-white"
+          >
+            Вернуться к заявкам
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <main className="min-h-screen bg-slate-100 p-8">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="rounded-xl bg-white p-6 shadow">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
+                Заявка SPEC76
+              </p>
+              <h1 className="mt-2 text-3xl font-bold">{project.title}</h1>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+              {project.status}
+            </span>
+          </div>
 
-      {/* 🟢 PROJECT HEADER */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-        <h1 className="text-xl font-bold">
-          {project?.name || "Project"}
-        </h1>
+          <p className="mt-6 whitespace-pre-wrap text-gray-700">
+            {project.description || "Описание пока не добавлено."}
+          </p>
 
-        <p className="text-sm text-gray-500">
-          SPEC76 Execution Dashboard
-        </p>
-      </div>
+          <dl className="mt-6 grid gap-4 border-t pt-6 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-gray-500">Создана</dt>
+              <dd className="mt-1 font-medium">
+                {new Date(project.created_at).toLocaleString("ru-RU")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Обновлена</dt>
+              <dd className="mt-1 font-medium">
+                {new Date(project.updated_at).toLocaleString("ru-RU")}
+              </dd>
+            </div>
+          </dl>
+        </div>
 
-      {/* 🧠 AI INPUT */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-        <h2 className="font-bold mb-2">🧠 AI Task Generator</h2>
-
-        <div className="flex gap-2">
-          <input
-            className="w-full rounded border p-2"
-            placeholder="Describe what needs to be done..."
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-          />
-
-          <button
-            onClick={handleAIGenerate}
-            className="rounded bg-purple-600 px-4 py-2 text-white"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Link
+            href={`/projects/${project.id}/tasks`}
+            className="rounded-xl bg-white p-6 shadow transition hover:shadow-md"
           >
-            {aiLoading ? "Generating..." : "Generate"}
-          </button>
+            <h2 className="text-xl font-semibold">Задачи по заявке</h2>
+            <p className="mt-2 text-gray-600">
+              Разбить работу на понятные этапы и контролировать выполнение.
+            </p>
+          </Link>
+
+          <div className="rounded-xl border border-dashed bg-white p-6">
+            <h2 className="text-xl font-semibold">Предложения исполнителей</h2>
+            <p className="mt-2 text-gray-600">
+              Этот модуль будет подключён следующим этапом MVP.
+            </p>
+          </div>
         </div>
+
+        <Link href="/projects" className="inline-block text-blue-700 hover:underline">
+          ← Все заявки
+        </Link>
       </div>
-
-      {/* 🟢 TASK BOARD */}
-      <div className="grid grid-cols-3 gap-4">
-
-        {/* TODO */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">Todo</h3>
-
-          {tasks
-            .filter((t) => t.status === "todo")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p className="font-medium">{task.title}</p>
-
-                <button
-                  onClick={() => executeTask(task)}
-                  className="mt-2 text-sm text-blue-600"
-                >
-                  Run Execution
-                </button>
-              </div>
-            ))}
-        </div>
-
-        {/* IN PROGRESS */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">In Progress</h3>
-
-          {tasks
-            .filter((t) => t.status === "in_progress")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p>{task.title}</p>
-              </div>
-            ))}
-        </div>
-
-        {/* DONE */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">Done</h3>
-
-          {tasks
-            .filter((t) => t.status === "done")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p>{task.title}</p>
-              </div>
-            ))}
-        </div>
-      </div>
-
-      {/* 🧠 ACTIVE TASK DEBUG PANEL */}
-      {activeTask && (
-        <div className="rounded border bg-white p-4 shadow">
-          <h2 className="font-bold">Active Task Execution</h2>
-
-          <pre className="mt-2 text-xs bg-gray-100 p-2 overflow-auto">
-            {JSON.stringify(activeTask, null, 2)}
-          </pre>
-        </div>
-      )}
-
-    </div>
+    </main>
   );
 }
