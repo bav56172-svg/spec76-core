@@ -30,7 +30,7 @@ export async function submitOffer(input: OfferCreateInput) {
 }
 
 export async function acceptOffer(offerId: string) {
-  const { error } = await supabase.rpc("accept_offer", {
+  const { data, error } = await supabase.rpc("accept_offer", {
     p_offer_id: offerId,
   });
 
@@ -38,5 +38,5 @@ export async function acceptOffer(offerId: string) {
     return { data: null, error };
   }
 
-  return { data: true, error: null };
+  return { data: data as string, error: null };
 }

@@ -11,6 +11,8 @@ export type ProjectStatus =
 
 export interface Project {
   id: EntityId;
+  request_id: EntityId | null;
+  accepted_offer_id: EntityId | null;
   company_id: EntityId;
   owner_id: EntityId;
   title: string;
