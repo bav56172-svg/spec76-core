@@ -136,17 +136,15 @@ export default function RequestDetailPage() {
   async function handleAcceptOffer(offerId: string) {
     setAcceptingOfferId(offerId);
     setErrorMessage(null);
-    const { error } = await acceptOffer(offerId);
+    const { data: projectId, error } = await acceptOffer(offerId);
     setAcceptingOfferId(null);
 
-    if (error) {
-      setErrorMessage(error.message);
+    if (error || !projectId) {
+      setErrorMessage(error?.message ?? "Не удалось активировать проект.");
       return;
     }
 
-    const requestResult = await getRequest(params.id);
-    if (!requestResult.error && requestResult.data) setRequest(requestResult.data);
-    await reloadOffers();
+    window.location.assign(`/projects/${projectId}`);
   }
 
   if (loading) return <main className="p-8">Загрузка заявки...</main>;
