@@ -102,12 +102,12 @@ export async function runContractorMatching(
   const [servicesResult, equipmentResult] = await Promise.all([
     supabase
       .from("company_services")
-      .select("company_id, service_name:value")
+      .select("company_id, value:service_name")
       .in("company_id", companyIds)
       .returns<CompanyCapability[]>(),
     supabase
       .from("company_equipment")
-      .select("company_id, equipment_name:value")
+      .select("company_id, value:equipment_name")
       .in("company_id", companyIds)
       .returns<CompanyCapability[]>(),
   ]);
