@@ -12,8 +12,12 @@ import {
   getCurrentContractorMatches,
   runContractorMatching,
 } from "@/services/contractorMatching";
+import { getCurrentUserCompany } from "@/services/companies";
+import { acceptOffer, getOffersForRequest, submitOffer } from "@/services/offers";
 import { getRequest } from "@/services/requests";
+import type { Company } from "@/types/company";
 import type { ContractorMatch } from "@/types/contractor-match";
+import type { Offer } from "@/types/offer";
 import type { Request } from "@/types/request";
 import type { RequestAnalysis } from "@/types/request-analysis";
 
@@ -22,10 +26,22 @@ export default function RequestDetailPage() {
   const [request, setRequest] = useState<Request | null>(null);
   const [analysis, setAnalysis] = useState<RequestAnalysis | null>(null);
   const [matches, setMatches] = useState<ContractorMatch[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
+  const [price, setPrice] = useState("");
+  const [proposedDays, setProposedDays] = useState("");
+  const [offerMessage, setOfferMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [matching, setMatching] = useState(false);
+  const [submittingOffer, setSubmittingOffer] = useState(false);
+  const [acceptingOfferId, setAcceptingOfferId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  async function reloadOffers() {
+    const result = await getOffersForRequest(params.id);
+    if (!result.error && result.data) setOffers(result.data);
+  }
 
   useEffect(() => {
     let active = true;
@@ -34,7 +50,9 @@ export default function RequestDetailPage() {
       getRequest(params.id),
       getCurrentRequestAnalysis(params.id),
       getCurrentContractorMatches(params.id),
-    ]).then(([requestResult, analysisResult, matchesResult]) => {
+      getOffersForRequest(params.id),
+      getCurrentUserCompany(),
+    ]).then(([requestResult, analysisResult, matchesResult, offersResult, company]) => {
       if (!active) return;
 
       if (requestResult.error || !requestResult.data) {
@@ -43,14 +61,10 @@ export default function RequestDetailPage() {
         setRequest(requestResult.data);
       }
 
-      if (!analysisResult.error && analysisResult.data) {
-        setAnalysis(analysisResult.data);
-      }
-
-      if (!matchesResult.error && matchesResult.data) {
-        setMatches(matchesResult.data);
-      }
-
+      if (!analysisResult.error && analysisResult.data) setAnalysis(analysisResult.data);
+      if (!matchesResult.error && matchesResult.data) setMatches(matchesResult.data);
+      if (!offersResult.error && offersResult.data) setOffers(offersResult.data);
+      if (company) setCurrentCompany(company as Company);
       setLoading(false);
     });
 
@@ -61,34 +75,78 @@ export default function RequestDetailPage() {
 
   async function handleAnalyze() {
     if (!request) return;
-
     setAnalyzing(true);
     setErrorMessage(null);
     const { data, error } = await runRequestAnalysis(request);
     setAnalyzing(false);
-
     if (error || !data) {
       setErrorMessage(error?.message ?? "Не удалось выполнить анализ заявки.");
       return;
     }
-
     setAnalysis(data);
   }
 
   async function handleMatching() {
     if (!request || !analysis) return;
-
     setMatching(true);
     setErrorMessage(null);
     const { data, error } = await runContractorMatching(request, analysis);
     setMatching(false);
-
     if (error || !data) {
       setErrorMessage(error?.message ?? "Не удалось подобрать исполнителей.");
       return;
     }
-
     setMatches(data);
+  }
+
+  async function handleSubmitOffer(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!currentCompany) return;
+
+    const numericPrice = Number(price.replace(",", "."));
+    const numericDays = proposedDays ? Number(proposedDays) : null;
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      setErrorMessage("Укажите корректную стоимость предложения.");
+      return;
+    }
+
+    setSubmittingOffer(true);
+    setErrorMessage(null);
+    const { data, error } = await submitOffer({
+      request_id: params.id,
+      company_id: currentCompany.id,
+      price: numericPrice,
+      proposed_days: numericDays,
+      message: offerMessage,
+    });
+    setSubmittingOffer(false);
+
+    if (error || !data) {
+      setErrorMessage(error?.message ?? "Не удалось отправить предложение.");
+      return;
+    }
+
+    setPrice("");
+    setProposedDays("");
+    setOfferMessage("");
+    await reloadOffers();
+  }
+
+  async function handleAcceptOffer(offerId: string) {
+    setAcceptingOfferId(offerId);
+    setErrorMessage(null);
+    const { error } = await acceptOffer(offerId);
+    setAcceptingOfferId(null);
+
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+
+    const requestResult = await getRequest(params.id);
+    if (!requestResult.error && requestResult.data) setRequest(requestResult.data);
+    await reloadOffers();
   }
 
   if (loading) return <main className="p-8">Загрузка заявки...</main>;
@@ -105,6 +163,11 @@ export default function RequestDetailPage() {
   }
 
   if (!request) return null;
+
+  const currentCompanyMatched = Boolean(
+    currentCompany && matches.some((match) => match.company_id === currentCompany.id),
+  );
+  const requestAccepted = request.status === "accepted";
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-10 sm:px-8">
@@ -130,86 +193,58 @@ export default function RequestDetailPage() {
 
         <section className="mt-8 rounded-xl border border-blue-200 bg-blue-50 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-semibold text-blue-950">Анализ заявки</h2>
-              <p className="mt-1 text-sm text-blue-900">Система определит услуги, технику, материалы и вопросы для уточнения.</p>
-            </div>
-            <button
-              type="button"
-              onClick={handleAnalyze}
-              disabled={analyzing}
-              className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white disabled:opacity-60"
-            >
+            <div><h2 className="font-semibold text-blue-950">Анализ заявки</h2><p className="mt-1 text-sm text-blue-900">Система определит услуги, технику, материалы и вопросы для уточнения.</p></div>
+            <button type="button" onClick={handleAnalyze} disabled={analyzing} className="rounded-lg bg-blue-700 px-4 py-2 font-medium text-white disabled:opacity-60">
               {analyzing ? "Анализируем..." : analysis ? "Повторить анализ" : "Анализировать заявку"}
             </button>
           </div>
-
-          {analysis && (
-            <div className="mt-5 space-y-4 text-sm text-slate-800">
-              <div><strong>Услуги:</strong> {analysis.services.join(", ")}</div>
-              <div><strong>Техника:</strong> {analysis.equipment.length ? analysis.equipment.join(", ") : "Не определена"}</div>
-              <div><strong>Материалы:</strong> {analysis.materials.length ? analysis.materials.join(", ") : "Не требуются или не определены"}</div>
-              <div><strong>Объём:</strong> {analysis.estimated_scope ?? "Требуется уточнение"}</div>
-              <div><strong>Уверенность:</strong> {Math.round(analysis.confidence * 100)}%</div>
-              {analysis.clarifications.length > 0 && (
-                <div>
-                  <strong>Нужно уточнить:</strong>
-                  <ul className="mt-2 list-disc space-y-1 pl-5">
-                    {analysis.clarifications.map((item) => <li key={item}>{item}</li>)}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+          {analysis && <div className="mt-5 space-y-4 text-sm text-slate-800">
+            <div><strong>Услуги:</strong> {analysis.services.join(", ")}</div>
+            <div><strong>Техника:</strong> {analysis.equipment.length ? analysis.equipment.join(", ") : "Не определена"}</div>
+            <div><strong>Материалы:</strong> {analysis.materials.length ? analysis.materials.join(", ") : "Не требуются или не определены"}</div>
+            <div><strong>Объём:</strong> {analysis.estimated_scope ?? "Требуется уточнение"}</div>
+            <div><strong>Уверенность:</strong> {Math.round(analysis.confidence * 100)}%</div>
+          </div>}
         </section>
 
         <section className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-semibold text-emerald-950">Подбор исполнителей</h2>
-              <p className="mt-1 text-sm text-emerald-900">
-                Система сравнит город, услуги и необходимую технику с профилями компаний.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleMatching}
-              disabled={matching || !analysis}
-              className="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <div><h2 className="font-semibold text-emerald-950">Подбор исполнителей</h2><p className="mt-1 text-sm text-emerald-900">Система сравнит город, услуги и необходимую технику с профилями компаний.</p></div>
+            <button type="button" onClick={handleMatching} disabled={matching || !analysis} className="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">
               {matching ? "Подбираем..." : matches.length ? "Повторить подбор" : "Подобрать исполнителей"}
             </button>
           </div>
+          {matches.length > 0 && <div className="mt-5 space-y-3">{matches.map((match) => (
+            <article key={match.id} className="rounded-xl border border-emerald-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-4"><div><h3 className="font-semibold text-slate-900">{match.company?.name ?? "Компания"}</h3><p className="mt-1 text-sm text-slate-600">{match.company?.city ?? "Город не указан"}</p></div><span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">{Math.round(match.score)}%</span></div>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">{match.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+            </article>
+          ))}</div>}
+        </section>
 
-          {!analysis && (
-            <p className="mt-4 text-sm text-emerald-900">Сначала выполните анализ заявки.</p>
+        <section className="mt-8 rounded-xl border border-violet-200 bg-violet-50 p-5">
+          <h2 className="font-semibold text-violet-950">Предложения исполнителей</h2>
+          <p className="mt-1 text-sm text-violet-900">Исполнитель указывает стоимость, срок и комментарий. Заказчик выбирает одно предложение.</p>
+
+          {currentCompany && currentCompanyMatched && !requestAccepted && (
+            <form onSubmit={handleSubmitOffer} className="mt-5 grid gap-3 rounded-xl border border-violet-200 bg-white p-4 sm:grid-cols-2">
+              <label className="block"><span className="text-sm font-medium text-slate-800">Стоимость, ₽</span><input value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" className="mt-1 w-full rounded-lg border p-3" required /></label>
+              <label className="block"><span className="text-sm font-medium text-slate-800">Срок, дней</span><input value={proposedDays} onChange={(event) => setProposedDays(event.target.value)} type="number" min="1" max="365" className="mt-1 w-full rounded-lg border p-3" /></label>
+              <label className="block sm:col-span-2"><span className="text-sm font-medium text-slate-800">Комментарий</span><textarea value={offerMessage} onChange={(event) => setOfferMessage(event.target.value)} maxLength={2000} className="mt-1 min-h-24 w-full rounded-lg border p-3" placeholder="Что входит в стоимость и когда готовы приступить" /></label>
+              <button type="submit" disabled={submittingOffer} className="rounded-lg bg-violet-700 px-4 py-3 font-semibold text-white disabled:opacity-60 sm:col-span-2">{submittingOffer ? "Отправляем..." : "Отправить предложение"}</button>
+            </form>
           )}
 
-          {analysis && matches.length === 0 && (
-            <p className="mt-4 text-sm text-emerald-900">
-              Подходящие компании пока не найдены. Для подбора компаниям нужно заполнить город, услуги и технику.
-            </p>
-          )}
-
-          {matches.length > 0 && (
-            <div className="mt-5 space-y-3">
-              {matches.map((match) => (
-                <article key={match.id} className="rounded-xl border border-emerald-200 bg-white p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{match.company?.name ?? "Компания"}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{match.company?.city ?? "Город не указан"}</p>
-                    </div>
-                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
-                      {Math.round(match.score)}%
-                    </span>
-                  </div>
-                  <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                    {match.reasons.map((reason) => <li key={reason}>{reason}</li>)}
-                  </ul>
-                </article>
-              ))}
-            </div>
+          {offers.length === 0 ? (
+            <p className="mt-5 text-sm text-violet-900">Предложений пока нет.</p>
+          ) : (
+            <div className="mt-5 space-y-3">{offers.map((offer) => (
+              <article key={offer.id} className="rounded-xl border border-violet-200 bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-slate-900">{offer.company?.name ?? "Компания"}</h3><p className="text-sm text-slate-600">{offer.company?.city ?? "Город не указан"}</p></div><div className="text-right"><p className="text-xl font-bold text-slate-900">{offer.price.toLocaleString("ru-RU")} ₽</p><p className="text-sm text-slate-600">{offer.proposed_days ? `${offer.proposed_days} дн.` : "Срок не указан"}</p></div></div>
+                {offer.message && <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700">{offer.message}</p>}
+                <div className="mt-4 flex items-center justify-between gap-3"><span className="rounded-full bg-violet-100 px-3 py-1 text-sm text-violet-800">{offer.status}</span>{offer.status === "submitted" && !requestAccepted && <button type="button" onClick={() => void handleAcceptOffer(offer.id)} disabled={acceptingOfferId === offer.id} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{acceptingOfferId === offer.id ? "Принимаем..." : "Выбрать исполнителя"}</button>}</div>
+              </article>
+            ))}</div>
           )}
         </section>
       </article>
