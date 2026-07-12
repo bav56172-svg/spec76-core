@@ -11,3 +11,4 @@ export * from "./request";
 export * from "./service";
 export * from "./task";
 export * from "./user";
+export * from "./request-analysis";
