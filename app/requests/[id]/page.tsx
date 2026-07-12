@@ -8,7 +8,12 @@ import {
   getCurrentRequestAnalysis,
   runRequestAnalysis,
 } from "@/services/requestAnalysis";
+import {
+  getCurrentContractorMatches,
+  runContractorMatching,
+} from "@/services/contractorMatching";
 import { getRequest } from "@/services/requests";
+import type { ContractorMatch } from "@/types/contractor-match";
 import type { Request } from "@/types/request";
 import type { RequestAnalysis } from "@/types/request-analysis";
 
@@ -16,8 +21,10 @@ export default function RequestDetailPage() {
   const params = useParams<{ id: string }>();
   const [request, setRequest] = useState<Request | null>(null);
   const [analysis, setAnalysis] = useState<RequestAnalysis | null>(null);
+  const [matches, setMatches] = useState<ContractorMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [matching, setMatching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,7 +33,8 @@ export default function RequestDetailPage() {
     void Promise.all([
       getRequest(params.id),
       getCurrentRequestAnalysis(params.id),
-    ]).then(([requestResult, analysisResult]) => {
+      getCurrentContractorMatches(params.id),
+    ]).then(([requestResult, analysisResult, matchesResult]) => {
       if (!active) return;
 
       if (requestResult.error || !requestResult.data) {
@@ -37,6 +45,10 @@ export default function RequestDetailPage() {
 
       if (!analysisResult.error && analysisResult.data) {
         setAnalysis(analysisResult.data);
+      }
+
+      if (!matchesResult.error && matchesResult.data) {
+        setMatches(matchesResult.data);
       }
 
       setLoading(false);
@@ -61,6 +73,22 @@ export default function RequestDetailPage() {
     }
 
     setAnalysis(data);
+  }
+
+  async function handleMatching() {
+    if (!request || !analysis) return;
+
+    setMatching(true);
+    setErrorMessage(null);
+    const { data, error } = await runContractorMatching(request, analysis);
+    setMatching(false);
+
+    if (error || !data) {
+      setErrorMessage(error?.message ?? "Не удалось подобрать исполнителей.");
+      return;
+    }
+
+    setMatches(data);
   }
 
   if (loading) return <main className="p-8">Загрузка заявки...</main>;
@@ -131,6 +159,56 @@ export default function RequestDetailPage() {
                   </ul>
                 </div>
               )}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold text-emerald-950">Подбор исполнителей</h2>
+              <p className="mt-1 text-sm text-emerald-900">
+                Система сравнит город, услуги и необходимую технику с профилями компаний.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleMatching}
+              disabled={matching || !analysis}
+              className="rounded-lg bg-emerald-700 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {matching ? "Подбираем..." : matches.length ? "Повторить подбор" : "Подобрать исполнителей"}
+            </button>
+          </div>
+
+          {!analysis && (
+            <p className="mt-4 text-sm text-emerald-900">Сначала выполните анализ заявки.</p>
+          )}
+
+          {analysis && matches.length === 0 && (
+            <p className="mt-4 text-sm text-emerald-900">
+              Подходящие компании пока не найдены. Для подбора компаниям нужно заполнить город, услуги и технику.
+            </p>
+          )}
+
+          {matches.length > 0 && (
+            <div className="mt-5 space-y-3">
+              {matches.map((match) => (
+                <article key={match.id} className="rounded-xl border border-emerald-200 bg-white p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">{match.company?.name ?? "Компания"}</h3>
+                      <p className="mt-1 text-sm text-slate-600">{match.company?.city ?? "Город не указан"}</p>
+                    </div>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
+                      {Math.round(match.score)}%
+                    </span>
+                  </div>
+                  <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                    {match.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+                  </ul>
+                </article>
+              ))}
             </div>
           )}
         </section>
