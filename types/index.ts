@@ -7,6 +7,7 @@ export * from "./offer";
 export * from "./payment";
 export * from "./project";
 export * from "./review";
+export * from "./request";
 export * from "./service";
 export * from "./task";
 export * from "./user";
