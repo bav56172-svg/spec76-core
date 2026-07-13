@@ -9,6 +9,31 @@ export type ProjectStatus =
   | "cancelled"
   | "archived";
 
+export interface ProjectRequestSummary {
+  id: EntityId;
+  title: string;
+  description: string;
+  city: string;
+  status: string;
+}
+
+export interface ProjectOfferSummary {
+  id: EntityId;
+  price: number;
+  currency: "RUB";
+  proposed_days: number | null;
+  message: string | null;
+  status: string;
+}
+
+export interface ProjectCompanySummary {
+  id: EntityId;
+  name: string;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
 export interface Project {
   id: EntityId;
   request_id: EntityId | null;
@@ -20,6 +45,12 @@ export interface Project {
   status: ProjectStatus;
   created_at: IsoDateTime;
   updated_at: IsoDateTime;
+}
+
+export interface ProjectWorkspace extends Project {
+  request?: ProjectRequestSummary | null;
+  accepted_offer?: ProjectOfferSummary | null;
+  company?: ProjectCompanySummary | null;
 }
 
 export type ProjectCreateInput = Pick<Project, "title"> &

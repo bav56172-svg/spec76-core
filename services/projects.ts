@@ -1,22 +1,37 @@
 import { supabase } from "@/services/supabase";
-import { Project } from "@/types/project";
+import type { Project, ProjectWorkspace } from "@/types/project";
+
+const PROJECT_WORKSPACE_SELECT = `
+  *,
+  request:requests(id, title, description, city, status),
+  accepted_offer:offers(id, price, currency, proposed_days, message, status),
+  company:companies(id, name, city, phone, email)
+`;
 
 export async function getProject(id: string) {
   return await supabase
     .from("projects")
     .select("*")
     .eq("id", id)
-    .single();
+    .single<Project>();
+}
+
+export async function getProjectWorkspace(id: string) {
+  return await supabase
+    .from("projects")
+    .select(PROJECT_WORKSPACE_SELECT)
+    .eq("id", id)
+    .single<ProjectWorkspace>();
 }
 
 export async function createProject(
-  project: Omit<Project, "id" | "created_at" | "updated_at">
+  project: Omit<Project, "id" | "created_at" | "updated_at">,
 ) {
   return await supabase
     .from("projects")
     .insert(project)
     .select()
-    .single();
+    .single<Project>();
 }
 
 export async function getProjects(companyId: string) {
@@ -24,19 +39,20 @@ export async function getProjects(companyId: string) {
     .from("projects")
     .select("*")
     .eq("company_id", companyId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<Project[]>();
 }
 
 export async function updateProject(
   id: string,
-  updates: Partial<Project>
+  updates: Partial<Project>,
 ) {
   return await supabase
     .from("projects")
     .update(updates)
     .eq("id", id)
     .select()
-    .single();
+    .single<Project>();
 }
 
 export async function deleteProject(id: string) {
