@@ -1,66 +1,54 @@
 import { supabase } from "@/services/supabase";
-import { Task } from "@/types/task";
+import type { Task, TaskCreateInput, TaskStatus } from "@/types/task";
 
-/**
- * Получить все задачи проекта
- */
 export async function getTasks(projectId: string) {
   return await supabase
     .from("tasks")
     .select("*")
     .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: true })
+    .returns<Task[]>();
 }
 
-/**
- * Создать задачу
- */
-export async function createTask(
-  task: Omit<Task, "id" | "created_at" | "updated_at">
-) {
+export async function createTask(input: TaskCreateInput) {
   return await supabase
     .from("tasks")
-    .insert(task)
-    .select()
-    .single();
+    .insert({
+      project_id: input.project_id,
+      title: input.title,
+      description: input.description ?? null,
+      priority: input.priority ?? "normal",
+      due_at: input.due_at ?? null,
+      assignee_id: input.assignee_id ?? null,
+      position: input.position ?? 0,
+      status: "todo",
+    })
+    .select("*")
+    .single<Task>();
 }
 
-/**
- * Обновить задачу
- */
 export async function updateTask(
   id: string,
-  updates: Partial<Task>
+  updates: Partial<Pick<Task, "title" | "description" | "priority" | "due_at" | "assignee_id" | "position">>,
 ) {
   return await supabase
     .from("tasks")
     .update(updates)
     .eq("id", id)
-    .select()
-    .single();
+    .select("*")
+    .single<Task>();
 }
 
-/**
- * Удалить задачу
- */
-export async function deleteTask(id: string) {
-  return await supabase
-    .from("tasks")
-    .delete()
-    .eq("id", id);
-}
-
-/**
- * Изменить статус задачи
- */
-export async function updateTaskStatus(
-  id: string,
-  status: "todo" | "in_progress" | "done"
-) {
+export async function updateTaskStatus(id: string, status: TaskStatus) {
   return await supabase
     .from("tasks")
     .update({ status })
     .eq("id", id)
-    .select()
-    .single();
+    .select("*")
+    .single<Task>();
+}
+
+export async function deleteTask(id: string) {
+  return await supabase.from("tasks").delete().eq("id", id);
 }
