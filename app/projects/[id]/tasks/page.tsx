@@ -4,14 +4,15 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { supabase } from "@/services/supabase";
-import type { Task } from "@/types/task";
+import {
+  createTask,
+  getTasks,
+  updateTaskStatus,
+} from "@/services/tasks";
+import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import TaskCard from "./components/TaskCard";
 
-const columns: Array<{
-  status: Task["status"];
-  title: string;
-}> = [
+const columns: Array<{ status: TaskStatus; title: string }> = [
   { status: "todo", title: "Сделать" },
   { status: "in_progress", title: "В работе" },
   { status: "review", title: "Проверка" },
@@ -24,6 +25,8 @@ export default function TasksPage() {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("normal");
+  const [dueAt, setDueAt] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,23 +34,18 @@ export default function TasksPage() {
   useEffect(() => {
     let active = true;
 
-    void supabase
-      .from("tasks")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("position", { ascending: true })
-      .then(({ data, error: loadError }) => {
-        if (!active) return;
+    void getTasks(projectId).then(({ data, error: loadError }) => {
+      if (!active) return;
 
-        if (loadError) {
-          setError(loadError.message);
-          setTasks([]);
-        } else {
-          setTasks((data ?? []) as Task[]);
-        }
+      if (loadError) {
+        setError(loadError.message);
+        setTasks([]);
+      } else {
+        setTasks(data ?? []);
+      }
 
-        setLoading(false);
-      });
+      setLoading(false);
+    });
 
     return () => {
       active = false;
@@ -55,7 +53,7 @@ export default function TasksPage() {
   }, [projectId]);
 
   const groupedTasks = useMemo(() => {
-    return columns.reduce<Record<Task["status"], Task[]>>(
+    return columns.reduce<Record<TaskStatus, Task[]>>(
       (accumulator, column) => {
         accumulator[column.status] = tasks.filter(
           (task) => task.status === column.status,
@@ -72,40 +70,34 @@ export default function TasksPage() {
     );
   }, [tasks]);
 
-  async function createTask() {
+  async function handleCreateTask() {
     const normalizedTitle = title.trim();
     if (!normalizedTitle || saving) return;
 
     setSaving(true);
     setError(null);
 
-    const position = tasks.length;
-    const { data, error: createError } = await supabase
-      .from("tasks")
-      .insert({
-        project_id: projectId,
-        title: normalizedTitle,
-        description: null,
-        status: "todo",
-        position,
-      })
-      .select("*")
-      .single();
+    const { data, error: createError } = await createTask({
+      project_id: projectId,
+      title: normalizedTitle,
+      priority,
+      due_at: dueAt ? new Date(dueAt).toISOString() : null,
+      position: tasks.length,
+    });
 
     if (createError) {
       setError(createError.message);
     } else if (data) {
-      setTasks((current) => [...current, data as Task]);
+      setTasks((current) => [...current, data]);
       setTitle("");
+      setPriority("normal");
+      setDueAt("");
     }
 
     setSaving(false);
   }
 
-  async function updateTaskStatus(
-    taskId: string,
-    status: Task["status"],
-  ) {
+  async function handleStatusChange(taskId: string, status: TaskStatus) {
     const previousTasks = tasks;
 
     setTasks((current) =>
@@ -114,56 +106,80 @@ export default function TasksPage() {
       ),
     );
 
-    const { error: updateError } = await supabase
-      .from("tasks")
-      .update({ status })
-      .eq("id", taskId);
+    const { data, error: updateError } = await updateTaskStatus(taskId, status);
 
     if (updateError) {
       setTasks(previousTasks);
       setError(updateError.message);
+    } else if (data) {
+      setTasks((current) =>
+        current.map((task) => (task.id === taskId ? data : task)),
+      );
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
+    <main className="min-h-screen bg-slate-100 p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <Link
+          href={`/projects/${projectId}`}
+          className="text-sm text-blue-700 hover:underline"
+        >
+          ← К рабочему пространству
+        </Link>
+
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <Link
-              href={`/projects/${projectId}`}
-              className="text-sm text-blue-700 hover:underline"
-            >
-              ← К заявке
-            </Link>
-            <h1 className="mt-2 text-3xl font-bold">Задачи заявки</h1>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+              Task Engine (движок задач)
+            </p>
+            <h1 className="mt-1 text-3xl font-bold">Задачи проекта</h1>
           </div>
+          <p className="text-sm text-slate-600">Всего задач: {tasks.length}</p>
         </div>
 
-        <div className="mt-6 flex gap-3 rounded-xl bg-white p-4 shadow">
+        <section className="mt-6 grid gap-3 rounded-2xl bg-white p-4 shadow-sm md:grid-cols-[1fr_180px_220px_auto]">
           <input
-            className="w-full rounded border p-3"
+            className="rounded-lg border p-3"
             placeholder="Новая задача"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                void createTask();
-              }
+              if (event.key === "Enter") void handleCreateTask();
             }}
           />
+
+          <select
+            className="rounded-lg border p-3"
+            value={priority}
+            onChange={(event) => setPriority(event.target.value as TaskPriority)}
+          >
+            <option value="low">Низкий приоритет</option>
+            <option value="normal">Обычный приоритет</option>
+            <option value="high">Высокий приоритет</option>
+            <option value="urgent">Срочный приоритет</option>
+          </select>
+
+          <input
+            type="datetime-local"
+            className="rounded-lg border p-3"
+            value={dueAt}
+            onChange={(event) => setDueAt(event.target.value)}
+            aria-label="Срок выполнения"
+          />
+
           <button
             type="button"
-            onClick={() => void createTask()}
+            onClick={() => void handleCreateTask()}
             disabled={saving || !title.trim()}
-            className="rounded bg-slate-900 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg bg-slate-900 px-5 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Сохраняем..." : "Добавить"}
           </button>
-        </div>
+        </section>
 
         {error && (
-          <div className="mt-4 rounded border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
             {error}
           </div>
         )}
@@ -175,7 +191,7 @@ export default function TasksPage() {
             {columns.map((column) => (
               <section
                 key={column.status}
-                className="rounded-xl bg-slate-200/70 p-4"
+                className="rounded-2xl bg-slate-200/70 p-4"
               >
                 <h2 className="font-semibold">
                   {column.title} ({groupedTasks[column.status].length})
@@ -186,7 +202,7 @@ export default function TasksPage() {
                     <TaskCard
                       key={task.id}
                       task={task}
-                      onStatusChange={updateTaskStatus}
+                      onStatusChange={handleStatusChange}
                     />
                   ))}
 
