@@ -24,3 +24,9 @@
 
 - Подготовлены схема задач, RLS, сервис и рабочая Kanban-доска.
 - Добавлена интеграция задач с Project Activity Engine.
+
+## 2026-07-13 — Release 0.3 Architecture Sprint
+
+- Подготовлен единый архитектурный пакет Release 0.3.
+- Зафиксированы Blueprint, Domain Roadmap, Integration Matrix, Architecture Impact Analysis и Release Definition of Done.
+- Установлено правило: OP-015…OP-018 проектируются совместно, но реализуются и проверяются последовательно.

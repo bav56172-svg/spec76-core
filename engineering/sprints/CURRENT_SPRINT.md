@@ -1,20 +1,27 @@
-# Current Sprint — Release 0.2 Project Execution
+# Current Sprint — Release 0.3 Architecture and Collaboration
 
 ## Goal
 
-Превратить активированный проект в рабочую среду управления выполнением заказа.
+Спроектировать и последовательно реализовать среду совместной работы проекта: документы, контрольные точки, уведомления и чат.
 
 ## Completed
 
-- OP-000 Engineering OS Foundation — completed.
-- OP-011 Execution Workspace Foundation — completed.
+- OP-000 Engineering OS Foundation
+- OP-011 Execution Workspace Foundation
+- OP-012 Project Execution Workspace
+- OP-013 Project Activity Engine
+- OP-014 Task Engine
+- Release 0.3 Architecture Package
+
+## In Progress
+
+- OP-015 Documents Engine — Engineering Preparation
 
 ## Next
 
-- OP-012 Project Execution Workspace — in progress.
-- OP-013 Project Activity Engine — completed.
-- OP-014 Task Engine — in progress.
-- OP-015 Documents foundation.
+- OP-016 Timeline & Milestones
+- OP-017 Notifications Engine
+- OP-018 Project Chat
 
 ## Blockers
 
