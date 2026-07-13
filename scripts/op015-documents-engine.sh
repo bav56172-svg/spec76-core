@@ -507,22 +507,26 @@ export default function ProjectDocumentsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadDocuments() {
-    const { data, error: loadError } = await listProjectDocuments(projectId);
-
-    if (loadError) {
-      setError(loadError.message);
-      setDocuments([]);
-    } else {
-      setDocuments(data ?? []);
-      setError(null);
-    }
-
-    setLoading(false);
-  }
-
   useEffect(() => {
-    void loadDocuments();
+    let active = true;
+
+    void listProjectDocuments(projectId).then(({ data, error: loadError }) => {
+      if (!active) return;
+
+      if (loadError) {
+        setError(loadError.message);
+        setDocuments([]);
+      } else {
+        setDocuments(data ?? []);
+        setError(null);
+      }
+
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [projectId]);
 
   const activeCount = useMemo(
