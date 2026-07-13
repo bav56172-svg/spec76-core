@@ -1,4 +1,5 @@
 import type { EntityId, IsoDateTime } from "./common";
+import type { TaskStatus } from "./task";
 
 export type ProjectStatus =
   | "draft"
@@ -34,6 +35,32 @@ export interface ProjectCompanySummary {
   email: string | null;
 }
 
+export interface ProjectTaskSummary {
+  id: EntityId;
+  title: string;
+  status: TaskStatus;
+  position: number;
+  created_at: IsoDateTime;
+  updated_at: IsoDateTime;
+}
+
+export interface ProjectTaskMetrics {
+  total: number;
+  todo: number;
+  in_progress: number;
+  review: number;
+  done: number;
+  cancelled: number;
+  completion_percent: number;
+}
+
+export interface ProjectActivityItem {
+  id: string;
+  title: string;
+  description: string;
+  created_at: IsoDateTime;
+}
+
 export interface Project {
   id: EntityId;
   request_id: EntityId | null;
@@ -51,6 +78,12 @@ export interface ProjectWorkspace extends Project {
   request?: ProjectRequestSummary | null;
   accepted_offer?: ProjectOfferSummary | null;
   company?: ProjectCompanySummary | null;
+}
+
+export interface ProjectExecutionWorkspace extends ProjectWorkspace {
+  tasks: ProjectTaskSummary[];
+  task_metrics: ProjectTaskMetrics;
+  activity: ProjectActivityItem[];
 }
 
 export type ProjectCreateInput = Pick<Project, "title"> &
