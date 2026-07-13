@@ -10,6 +10,8 @@ create unique index if not exists projects_accepted_offer_id_unique_idx
   on public.projects(accepted_offer_id)
   where accepted_offer_id is not null;
 
+drop function if exists public.accept_offer(uuid);
+
 create or replace function public.accept_offer(p_offer_id uuid)
 returns uuid
 language plpgsql
