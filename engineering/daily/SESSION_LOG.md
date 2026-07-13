@@ -30,3 +30,10 @@
 - Подготовлен единый архитектурный пакет Release 0.3.
 - Зафиксированы Blueprint, Domain Roadmap, Integration Matrix, Architecture Impact Analysis и Release Definition of Done.
 - Установлено правило: OP-015…OP-018 проектируются совместно, но реализуются и проверяются последовательно.
+
+## 2026-07-13 — OP-015 Documents Engine
+
+- Начата реализация Capability C-001 Project Collaboration.
+- Добавлена доменная модель документов и версий.
+- Добавлены RLS, события Activity Engine и интерфейс реестра документов.
+- Добавлен двуязычный инженерный словарь терминов OP-015.
