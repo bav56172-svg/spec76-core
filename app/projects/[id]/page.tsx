@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getProjectExecutionWorkspace } from "@/services/projects";
-import type { ProjectExecutionWorkspace, ProjectStatus } from "@/types/project";
+import { getProjectActivities } from "@/services/projectActivities";
+import { getProjectWorkspace } from "@/services/projects";
+import type { ProjectActivity } from "@/types/project-activity";
+import type { ProjectStatus, ProjectWorkspace } from "@/types/project";
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
   draft: "Черновик",
@@ -23,22 +25,32 @@ function formatDate(value: string): string {
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
-  const [project, setProject] = useState<ProjectExecutionWorkspace | null>(null);
+  const projectId = params.id;
+
+  const [project, setProject] = useState<ProjectWorkspace | null>(null);
+  const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    void getProjectExecutionWorkspace(params.id).then(({ data, error: loadError }) => {
+    void Promise.all([
+      getProjectWorkspace(projectId),
+      getProjectActivities(projectId),
+    ]).then(([projectResult, activityResult]) => {
       if (!active) return;
 
-      if (loadError || !data) {
-        setError(loadError?.message ?? "Проект не найден.");
+      if (projectResult.error || !projectResult.data) {
+        setError(projectResult.error?.message ?? "Проект не найден.");
         setProject(null);
       } else {
-        setProject(data);
+        setProject(projectResult.data);
         setError(null);
+      }
+
+      if (!activityResult.error && activityResult.data) {
+        setActivities(activityResult.data);
       }
 
       setLoading(false);
@@ -47,7 +59,7 @@ export default function ProjectDetailPage() {
     return () => {
       active = false;
     };
-  }, [params.id]);
+  }, [projectId]);
 
   if (loading) return <main className="p-8">Загрузка рабочего пространства...</main>;
 
@@ -64,9 +76,6 @@ export default function ProjectDetailPage() {
       </main>
     );
   }
-
-  const metrics = project.task_metrics;
-  const nextTasks = project.tasks.filter((task) => task.status !== "done" && task.status !== "cancelled").slice(0, 4);
 
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
@@ -86,94 +95,78 @@ export default function ProjectDetailPage() {
               {STATUS_LABELS[project.status]}
             </span>
           </div>
-
-          <div className="mt-7">
-            <div className="flex items-center justify-between text-sm text-slate-300">
-              <span>Прогресс выполнения</span>
-              <span>{metrics.completion_percent}%</span>
-            </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-sky-400 transition-all" style={{ width: `${metrics.completion_percent}%` }} />
-            </div>
-          </div>
         </header>
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            ["Всего задач", metrics.total],
-            ["В работе", metrics.in_progress],
-            ["На проверке", metrics.review],
-            ["Завершено", metrics.done],
-          ].map(([label, value]) => (
-            <article key={label} className="rounded-2xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-slate-500">{label}</p>
-              <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-            </article>
-          ))}
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Исполнитель</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">{project.company?.name ?? "Компания не определена"}</h2>
+            <p className="mt-2 text-sm text-slate-600">{project.company?.city ?? "Город не указан"}</p>
+          </article>
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Стоимость</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
+              {project.accepted_offer ? `${project.accepted_offer.price.toLocaleString("ru-RU")} ₽` : "Не определена"}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {project.accepted_offer?.proposed_days ? `Срок: ${project.accepted_offer.proposed_days} дн.` : "Срок не указан"}
+            </p>
+          </article>
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Исходная заявка</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">{project.request?.title ?? "Заявка не связана"}</h2>
+            <p className="mt-2 text-sm text-slate-600">{project.request?.city ?? "Город не указан"}</p>
+          </article>
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <article className="rounded-2xl bg-white p-6 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Ближайшие задачи</h2>
-                  <p className="mt-1 text-sm text-slate-600">Приоритетный рабочий список проекта.</p>
-                </div>
-                <Link href={`/projects/${project.id}/tasks`} className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                  Открыть доску задач
+              <h2 className="text-xl font-semibold text-slate-900">Управление выполнением</h2>
+              <p className="mt-1 text-sm text-slate-600">Основные рабочие модули проекта собраны в одном месте.</p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <Link href={`/projects/${project.id}/tasks`} className="rounded-xl border border-sky-200 bg-sky-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-sky-950">Задачи и этапы</h3>
+                  <p className="mt-2 text-sm text-sky-900">Планирование, статусы и контроль выполнения работ.</p>
                 </Link>
-              </div>
-
-              {nextTasks.length === 0 ? (
-                <p className="mt-5 rounded-xl border border-dashed p-5 text-sm text-slate-600">
-                  Активных задач пока нет. Создайте первую задачу на доске проекта.
-                </p>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {nextTasks.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between gap-4 rounded-xl border p-4">
-                      <div>
-                        <p className="font-medium text-slate-900">{task.title}</p>
-                        <p className="mt-1 text-sm text-slate-500">Обновлено: {formatDate(task.updated_at)}</p>
-                      </div>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{task.status}</span>
-                    </div>
-                  ))}
+                <Link href={`/projects/${project.id}/docs`} className="rounded-xl border border-amber-200 bg-amber-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-amber-950">Документы</h3>
+                  <p className="mt-2 text-sm text-amber-900">Рабочие материалы и документы проекта.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/governance`} className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-emerald-950">Контроль проекта</h3>
+                  <p className="mt-2 text-sm text-emerald-900">Правила, решения и контрольные точки выполнения.</p>
+                </Link>
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
+                  <h3 className="font-semibold text-slate-900">Чат проекта</h3>
+                  <p className="mt-2 text-sm text-slate-600">Следующий самостоятельный модуль.</p>
                 </div>
-              )}
-            </article>
-
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">Быстрые действия</h2>
-              <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                <Link href={`/projects/${project.id}/tasks`} className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-semibold text-sky-950">Добавить задачу</Link>
-                <Link href={`/projects/${project.id}/docs`} className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-950">Открыть документы</Link>
-                <Link href={`/projects/${project.id}/governance`} className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-950">Контроль проекта</Link>
               </div>
             </article>
 
-            <article className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-slate-900">Условия выполнения</h2>
-              <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-                <div><dt className="text-sm text-slate-500">Исполнитель</dt><dd className="mt-1 font-medium">{project.company?.name ?? "Не определён"}</dd></div>
-                <div><dt className="text-sm text-slate-500">Стоимость</dt><dd className="mt-1 font-medium">{project.accepted_offer ? `${project.accepted_offer.price.toLocaleString("ru-RU")} ₽` : "Не определена"}</dd></div>
-                <div><dt className="text-sm text-slate-500">Срок</dt><dd className="mt-1 font-medium">{project.accepted_offer?.proposed_days ? `${project.accepted_offer.proposed_days} дн.` : "Не указан"}</dd></div>
-              </dl>
-            </article>
+            {project.accepted_offer?.message && (
+              <article className="rounded-2xl bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-900">Условия предложения</h2>
+                <p className="mt-4 whitespace-pre-wrap text-slate-700">{project.accepted_offer.message}</p>
+              </article>
+            )}
           </div>
 
           <aside className="rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Activity Feed (лента действий)</h2>
-            <div className="mt-5 space-y-5">
-              {project.activity.slice(0, 8).map((item) => (
-                <div key={item.id} className="border-l-2 border-sky-200 pl-4">
-                  <h3 className="font-medium text-slate-900">{item.title}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{item.description}</p>
-                  <p className="mt-2 text-xs text-slate-400">{formatDate(item.created_at)}</p>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-xl font-semibold text-slate-900">Activity Feed (лента активности)</h2>
+            {activities.length === 0 ? (
+              <p className="mt-5 text-sm text-slate-600">События появятся после применения миграции и начала работы с проектом.</p>
+            ) : (
+              <div className="mt-5 space-y-5">
+                {activities.map((item) => (
+                  <div key={item.id} className="border-l-2 border-sky-200 pl-4">
+                    <h3 className="font-medium text-slate-900">{item.title}</h3>
+                    {item.description && <p className="mt-1 text-sm text-slate-600">{item.description}</p>}
+                    <p className="mt-2 text-xs text-slate-400">{formatDate(item.created_at)}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </aside>
         </section>
 

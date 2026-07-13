@@ -13,3 +13,4 @@ export * from "./service";
 export * from "./task";
 export * from "./user";
 export * from "./request-analysis";
+export * from "./project-activity";
