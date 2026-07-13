@@ -135,15 +135,17 @@ create trigger projects_activity_status
 after update of status on public.projects
 for each row execute function public.log_project_activity();
 
-drop trigger if exists tasks_activity_created on public.tasks;
-create trigger tasks_activity_created
-after insert on public.tasks
-for each row execute function public.log_project_activity();
+do $$
+begin
+  if to_regclass('public.tasks') is not null then
+    execute 'drop trigger if exists tasks_activity_created on public.tasks';
+    execute 'create trigger tasks_activity_created after insert on public.tasks for each row execute function public.log_project_activity()';
 
-drop trigger if exists tasks_activity_status on public.tasks;
-create trigger tasks_activity_status
-after update of status on public.tasks
-for each row execute function public.log_project_activity();
+    execute 'drop trigger if exists tasks_activity_status on public.tasks';
+    execute 'create trigger tasks_activity_status after update of status on public.tasks for each row execute function public.log_project_activity()';
+  end if;
+end;
+$$;
 
 insert into public.project_activities (
   project_id, actor_id, event_type, title, description, metadata, source_key, created_at
