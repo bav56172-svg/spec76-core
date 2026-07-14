@@ -4,7 +4,15 @@ export type ProjectActivityType =
   | "project_created"
   | "project_status_changed"
   | "task_created"
-  | "task_status_changed";
+  | "task_status_changed"
+  | "document_created"
+  | "document_archived"
+  | "document_restored"
+  | "document_version_created"
+  | "timeline_created"
+  | "timeline_status_changed"
+  | "milestone_created"
+  | "milestone_completed";
 
 export interface ProjectActivity {
   id: EntityId;

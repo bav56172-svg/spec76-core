@@ -16,3 +16,5 @@ export * from "./request-analysis";
 export * from "./project-activity";
 
 export * from "./document";
+
+export * from "./timeline";
