@@ -12,7 +12,9 @@ export type ProjectActivityType =
   | "timeline_created"
   | "timeline_status_changed"
   | "milestone_created"
-  | "milestone_completed";
+  | "milestone_completed"
+  | "conversation_created"
+  | "message_created";
 
 export interface ProjectActivity {
   id: EntityId;
