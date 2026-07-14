@@ -1,8 +1,8 @@
-# Current Sprint (текущий спринт) — Release 0.3 Project Collaboration
+# Current Sprint — Release 0.3 Review
 
 ## Goal (цель)
 
-Реализовать Capability C-001 Project Collaboration (возможность совместной работы над проектом).
+Проверить и официально закрыть Release 0.3 Project Collaboration (релиз 0.3 «Совместная работа над проектом»).
 
 ## Completed (завершено)
 
@@ -14,15 +14,20 @@
 - OP-015 Documents Engine.
 - OP-016 Timeline & Milestones.
 - OP-017 Notifications Engine.
+- OP-018 Project Communication Platform.
 
 ## In Progress (в работе)
 
-- OP-017 Notifications Engine.
+- Release Review 0.3 (обзор релиза 0.3).
+- Demo Checklist (демонстрационный чек-лист).
+- Security Review (обзор безопасности) политик RLS.
 
 ## Next (далее)
 
-- OP-018 Project Chat.
+- Зафиксировать Release Notes (заметки к релизу).
+- Закрыть Capability C-001.
+- Спроектировать Release 0.4.
 
 ## Blockers (блокеры)
 
-Нет подтверждённых блокеров.
+Нет подтверждённых блокеров. До закрытия релиза требуется ручная демонстрация полного сценария.
