@@ -18,3 +18,4 @@ export * from "./project-activity";
 export * from "./document";
 
 export * from "./timeline";
+export * from "./notification";

@@ -137,6 +137,10 @@ export default function ProjectDetailPage() {
                   <h3 className="font-semibold text-violet-950">Временная шкала</h3>
                   <p className="mt-2 text-sm text-violet-900">Этапы, прогресс и контрольные результаты проекта.</p>
                 </Link>
+                <Link href={`/projects/${project.id}/notifications`} className="rounded-xl border border-rose-200 bg-rose-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-rose-950">Уведомления</h3>
+                  <p className="mt-2 text-sm text-rose-900">Персональные сообщения о важных событиях проекта.</p>
+                </Link>
                 <Link href={`/projects/${project.id}/governance`} className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 transition hover:shadow-md">
                   <h3 className="font-semibold text-emerald-950">Контроль проекта</h3>
                   <p className="mt-2 text-sm text-emerald-900">Правила, решения и контрольные точки выполнения.</p>
