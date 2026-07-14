@@ -48,3 +48,11 @@
 - Добавлена событийная интеграция с `project_activities`.
 - Добавлена страница уведомлений проекта.
 - Добавлены RLS-политики и двуязычный словарь терминов.
+
+## 2026-07-14 — OP-018 Project Communication Platform
+
+- Подготовлена модель Conversation, Participant, Message и Attachment.
+- Добавлена интеграция с Activity Engine и Notifications Engine.
+- Создан Engineering Playbook (Инженерный свод правил).
+- Следующий контрольный этап: Release Review 0.3.
+

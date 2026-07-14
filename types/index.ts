@@ -19,3 +19,5 @@ export * from "./document";
 
 export * from "./timeline";
 export * from "./notification";
+export * from "./conversation";
+export * from "./message";

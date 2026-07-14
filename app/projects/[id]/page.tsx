@@ -145,10 +145,10 @@ export default function ProjectDetailPage() {
                   <h3 className="font-semibold text-emerald-950">Контроль проекта</h3>
                   <p className="mt-2 text-sm text-emerald-900">Правила, решения и контрольные точки выполнения.</p>
                 </Link>
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
-                  <h3 className="font-semibold text-slate-900">Чат проекта</h3>
-                  <p className="mt-2 text-sm text-slate-600">Следующий самостоятельный модуль.</p>
-                </div>
+                <Link href={`/projects/${project.id}/communication`} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-fuchsia-950">Коммуникации проекта</h3>
+                  <p className="mt-2 text-sm text-fuchsia-900">Диалоги, сообщения и обсуждение рабочих объектов.</p>
+                </Link>
               </div>
             </article>
 

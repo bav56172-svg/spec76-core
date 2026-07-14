@@ -13,6 +13,7 @@
 - OP-014 Task Engine.
 - OP-015 Documents Engine.
 - OP-016 Timeline & Milestones.
+- OP-017 Notifications Engine.
 
 ## In Progress (в работе)
 
