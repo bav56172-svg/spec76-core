@@ -63,3 +63,19 @@
 - Подготовлены Release Review, Demo Checklist и Release Notes.
 - Выполняется автоматическая проверка обязательных артефактов, RLS и отсутствия service_role в прикладном коде.
 - Следующее действие: пройти демонстрационный сценарий и зафиксировать итоговый статус релиза.
+
+## 2026-07-14 — Release 0.4 Architecture Package
+
+- Зафиксированы Human First и Invisible Complexity.
+- Утверждена AI Organization с Platform Owner как окончательной инстанцией.
+- Утверждено Governed Agent Learning и Knowledge Evolution.
+- Подготовлен архитектурный пакет Release 0.4.
+- Следующий инженерный этап: OP-019 Role Model Foundation.
+
+## 2026-07-15 — OP-019A SPEC76 OS Skeleton
+
+- Зафиксирована дата рождения SPEC76 OS: 15.07.2026.
+- Создан главный инженерный портал и Master Index (главный индекс).
+- Созданы Vision (видение), History (история) и базовые разделы SPEC76 OS.
+- Бизнес-код, пользовательские интерфейсы и база данных не изменялись.
+- Следующий этап: OP-019B Documentation Standards (стандарты документации).
