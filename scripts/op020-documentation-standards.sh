@@ -449,7 +449,7 @@ sprint.write_text("""# Current Sprint — Release 0.4 / Wave 1
 
 ## Next (далее)
 
-- OP-021 SPEC76 Build System (система сборки SPEC76).
+- EP-021 SPEC76 Build System (система сборки SPEC76).
 - OP-022 Engineering Workplace (инженерное рабочее место).
 - OP-023 Academy Foundation (основа академии).
 - OP-024 AI & Knowledge Foundation (основа ИИ и платформы знаний).
