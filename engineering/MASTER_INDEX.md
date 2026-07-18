@@ -1,6 +1,6 @@
 # SPEC76 OS — Master Index (главный индекс)
 
-**Версия:** 1.1
+**Версия:** 1.2
 **Статус:** Active (действует)
 **Владелец:** Platform Owner (владелец платформы)
 **Следующий пересмотр:** при закрытии Release 0.4
@@ -24,6 +24,8 @@
 - `releases/`
 - `capabilities/`
 - `operations/`
+- `packs/`
+- `packs/EP-023_SECURITY_RECOVERY.md` — реестр классификации `main` и восстановление критических контуров безопасности.
 - `sprints/`
 - `daily/`
 
