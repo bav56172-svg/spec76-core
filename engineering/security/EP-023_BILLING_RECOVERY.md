@@ -1,12 +1,12 @@
 # EP-023 — Billing Recovery
 
-**Версия:** 0.3  
+**Версия:** 0.4  
 **Статус:** In Progress (в работе)  
 **Владелец:** Platform Owner (владелец платформы)  
 **Release:** 0.4  
 **Engineering Package:** `EP-023`  
 **Ветка:** `engineering/ep-023-security-recovery`  
-**Следующий пересмотр:** после функциональных RLS-тестов и проверки Stripe webhook
+**Следующий пересмотр:** после проверки Stripe webhook и rollback-процедуры
 
 ## Проверенные факты
 
@@ -19,7 +19,8 @@
 - создан серверный Stripe-клиент `lib/billing/stripe.ts`;
 - создан новый обработчик `app/api/billing/webhook/route.ts`;
 - локально успешно выполнены Lint (проверка кода), TypeScript (проверка типов), Production Build (продукционная сборка) и Diff Check (проверка корректности различий);
-- маршрут `/api/billing/webhook` включён в продукционную сборку.
+- маршрут `/api/billing/webhook` включён в продукционную сборку;
+- функциональная проверка RLS под ролями `authenticated` и `service_role` завершена успешно: пройдено 10 из 10 тестов, ошибок нет.
 
 ## Архитектурное решение
 
@@ -153,20 +154,45 @@ git diff --check
 
 Структурный post-migration audit (аудит после миграции) в Supabase успешно подтвердил таблицы, колонки, индексы, ограничения, права и конфигурацию RLS.
 
-Структурный аудит не заменяет функциональные тесты под реальными ролями.
+### Функциональная проверка RLS
+
+Функциональный тест выполнен в Supabase SQL Editor внутри транзакции с финальным `ROLLBACK` (откатом транзакции). Тестовые таблицы и записи после выполнения не сохранены.
+
+Итог:
+
+```json
+{
+  "all_passed": true,
+  "passed_count": 10,
+  "failed_count": 0
+}
+```
+
+Подтверждено:
+
+1. `authenticated` читает собственную строку `billing_customers`;
+2. `authenticated` не читает чужую строку `billing_customers`;
+3. `authenticated` читает собственную строку `billing_subscriptions`;
+4. `authenticated` не читает чужую строку `billing_subscriptions`;
+5. пользовательский `INSERT` в billing-данные запрещён;
+6. пользовательский `UPDATE` billing-данных запрещён;
+7. пользовательский `DELETE` billing-данных запрещён;
+8. `authenticated` не имеет доступа к `billing_webhook_events`;
+9. повторный `stripe_event_id` отклоняется ограничением уникальности;
+10. `service_role` может записывать события в `billing_webhook_events`.
+
+Функциональная проверка RLS завершена успешно.
 
 ## Оставшиеся проверки
 
 До production (продуктивной среды) необходимо:
 
-1. проверить чтение собственной строки authenticated-пользователем;
-2. проверить невозможность чтения чужой строки;
-3. проверить невозможность пользовательских `INSERT`, `UPDATE` и `DELETE`;
-4. проверить отсутствие доступа к `billing_webhook_events`;
-5. проверить повторную обработку одинакового `stripe_event_id`;
-6. проверить webhook с тестовыми Stripe-событиями;
-7. проверить откат на отдельной тестовой базе;
-8. получить окончательное утверждение Platform Owner.
+1. проверить webhook с тестовыми Stripe-событиями;
+2. проверить повторную доставку одного Stripe-события на уровне HTTP-обработчика;
+3. проверить обработку неподдерживаемого типа события;
+4. проверить отказ при неверной подписи Stripe;
+5. проверить откат на отдельной тестовой базе;
+6. получить окончательное утверждение Platform Owner.
 
 ## Статус этапов
 
@@ -177,7 +203,7 @@ git diff --check
 | Migration implementation | Завершена в GitHub |
 | Migration application | Выполнена в Supabase |
 | Structural RLS verification | Завершена |
-| Functional RLS verification | Требуется |
+| Functional RLS verification | Завершена: 10/10 |
 | Stripe SDK | Установлен и зафиксирован |
 | Server clients | Реализованы |
 | Webhook implementation | Реализован |
@@ -185,8 +211,10 @@ git diff --check
 | TypeScript | Пройден локально |
 | Production Build | Пройден локально |
 | Diff Check | Пройден локально |
+| Stripe webhook functional verification | Требуется |
+| Rollback verification | Требуется |
 | Platform Owner approval | Требуется перед production |
 
 ## Главный следующий шаг
 
-Выполнить функциональные RLS-тесты под ролями `authenticated` и `anon`, затем проверить идемпотентность webhook на тестовых Stripe-событиях.
+Выполнить функциональную проверку `/api/billing/webhook` с тестовыми Stripe-событиями, включая валидную подпись, повторную доставку, неподдерживаемый тип события и отказ при неверной подписи.
