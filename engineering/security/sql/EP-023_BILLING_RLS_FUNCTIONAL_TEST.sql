@@ -37,6 +37,8 @@ create temporary table ep023_test_seed (
   stripe_subscription_id text not null
 );
 
+grant select on table ep023_test_seed to authenticated, service_role;
+
 insert into ep023_test_seed (
   user_number,
   user_id,
