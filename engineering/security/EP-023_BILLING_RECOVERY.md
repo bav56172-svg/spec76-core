@@ -1,12 +1,12 @@
 # EP-023 — Billing Recovery
 
-**Версия:** 0.5  
-**Статус:** Recovery Verified (восстановление подтверждено)  
+**Версия:** 0.6  
+**Статус:** Recovery and Rollback Verified (восстановление и откат подтверждены)  
 **Владелец:** Platform Owner (владелец платформы)  
 **Release:** 0.4  
 **Engineering Package:** `EP-023`  
 **Ветка:** `engineering/ep-023-security-recovery`  
-**Следующий пересмотр:** после проверки rollback-процедуры и утверждения Platform Owner
+**Следующий пересмотр:** после проверки тестовых событий Stripe и утверждения Platform Owner
 
 ## Проверенные факты
 
@@ -23,7 +23,9 @@
 - функциональная проверка RLS под ролями `authenticated` и `service_role` завершена успешно: пройдено 10 из 10 тестов, ошибок нет;
 - функциональная проверка Stripe webhook завершена успешно: пройдено 4 из 4 HTTP-тестов;
 - подтверждены отказ при отсутствующей и неверной подписи Stripe, корректная обработка неподдерживаемого события и Idempotency (идемпотентность — защита от повторной обработки одного события);
-- повторный запуск `npm run verify` успешно завершил Lint, TypeScript и Production Build.
+- повторный запуск `npm run verify` успешно завершил Lint, TypeScript и Production Build;
+- Rollback verification (проверка отката — подтверждение безопасного удаления и восстановления объектов миграции) выполнена в отдельном тестовом проекте Supabase;
+- после `ROLLBACK` подтверждено восстановление всех трёх таблиц и функции `public.billing_set_updated_at()`.
 
 ## Архитектурное решение
 
@@ -224,13 +226,29 @@ npm run verify
 
 Успешно пройдены Lint, TypeScript и Production Build. Маршрут `/api/billing/webhook` присутствует в продукционной сборке.
 
+### Проверка rollback-процедуры
+
+Проверка выполнена в отдельном тестовом проекте Supabase `spec76-ep023-test`.
+
+Использован файл:
+
+`supabase/tests/ep_023_billing_rollback_verification.sql`
+
+Скрипт выполнился без ошибок. После завершения отдельно проверено наличие объектов. Все четыре проверки вернули `true`:
+
+- `public.billing_customers` восстановлена;
+- `public.billing_subscriptions` восстановлена;
+- `public.billing_webhook_events` восстановлена;
+- `public.billing_set_updated_at()` восстановлена.
+
+Rollback verification завершена успешно. Тестовая база после `ROLLBACK` сохранила объекты миграции EP-023.
+
 ## Оставшиеся проверки
 
 До production (продуктивной среды) необходимо:
 
-1. проверить Rollback (откат — безопасное возвращение базы к предыдущему состоянию) на отдельной тестовой базе;
-2. проверить реальные тестовые события через Stripe CLI (интерфейс командной строки Stripe — инструмент отправки событий Stripe) или Stripe Dashboard без production-данных;
-3. получить окончательное утверждение Platform Owner.
+1. проверить реальные тестовые события через Stripe CLI (интерфейс командной строки Stripe — инструмент отправки событий Stripe) или Stripe Dashboard без production-данных;
+2. получить окончательное утверждение Platform Owner.
 
 ## Статус этапов
 
@@ -251,9 +269,9 @@ npm run verify
 | Diff Check | Пройден локально |
 | Stripe webhook functional verification | Завершена локально: 4/4 |
 | Recovery verification | Завершена: RLS 10/10, webhook 4/4, verify пройден |
-| Rollback verification | Требуется |
+| Rollback verification | Завершена на отдельной тестовой базе |
 | Platform Owner approval | Требуется перед production |
 
 ## Главный следующий шаг
 
-Проверить rollback-процедуру на отдельной тестовой базе, затем передать результаты Platform Owner для окончательного утверждения перед production.
+Проверить тестовые события Stripe через Stripe CLI или Stripe Dashboard без production-данных, затем передать Billing Recovery Platform Owner для окончательного утверждения перед production.
