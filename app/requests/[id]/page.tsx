@@ -52,7 +52,7 @@ export default function RequestDetailPage() {
       getCurrentContractorMatches(params.id),
       getOffersForRequest(params.id),
       getCurrentUserCompany(),
-    ]).then(([requestResult, analysisResult, matchesResult, offersResult, company]) => {
+    ]).then(([requestResult, analysisResult, matchesResult, offersResult, companyResult]) => {
       if (!active) return;
 
       if (requestResult.error || !requestResult.data) {
@@ -64,7 +64,9 @@ export default function RequestDetailPage() {
       if (!analysisResult.error && analysisResult.data) setAnalysis(analysisResult.data);
       if (!matchesResult.error && matchesResult.data) setMatches(matchesResult.data);
       if (!offersResult.error && offersResult.data) setOffers(offersResult.data);
-      if (company) setCurrentCompany(company as Company);
+      if (!companyResult.error && companyResult.data) {
+        setCurrentCompany(companyResult.data);
+      }
       setLoading(false);
     });
 

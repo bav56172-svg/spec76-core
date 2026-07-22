@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { supabase } from "@/services/supabase";
+import {
+  createCompany,
+  listCompanies,
+} from "@/services/companies";
 import type { Company } from "@/types/company";
 
 export default function CompaniesPage() {
@@ -13,29 +16,25 @@ export default function CompaniesPage() {
   useEffect(() => {
     let active = true;
 
-    void supabase
-      .from("companies")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (!active) return;
+    void listCompanies().then(({ data, error }) => {
+      if (!active) return;
 
-        if (error) {
-          console.error(error);
-          setCompanies([]);
-        } else {
-          setCompanies((data ?? []) as Company[]);
-        }
+      if (error) {
+        console.error(error);
+        setCompanies([]);
+      } else {
+        setCompanies(data);
+      }
 
-        setLoading(false);
-      });
+      setLoading(false);
+    });
 
     return () => {
       active = false;
     };
   }, []);
 
-  async function createCompany() {
+  async function handleCreateCompany() {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
@@ -43,30 +42,16 @@ export default function CompaniesPage() {
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert("Необходимо войти в систему.");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("companies")
-      .insert({
-        name: normalizedName,
-        owner_id: user.id,
-      })
-      .select("*")
-      .single();
+    const { data, error } = await createCompany({
+      name: normalizedName,
+    });
 
     if (error) {
       alert(error.message);
       return;
     }
 
-    setCompanies((current) => [data as Company, ...current]);
+    setCompanies((current) => [data, ...current]);
     setName("");
   }
 
@@ -84,14 +69,16 @@ export default function CompaniesPage() {
 
         <button
           type="button"
-          onClick={() => void createCompany()}
+          onClick={() => void handleCreateCompany()}
           className="mt-4 w-full rounded bg-blue-600 p-3 text-white"
         >
           Создать компанию
         </button>
 
         <section className="mt-8">
-          <h2 className="mb-3 text-xl font-semibold">Список компаний</h2>
+          <h2 className="mb-3 text-xl font-semibold">
+            Список компаний
+          </h2>
 
           {loading ? (
             <p className="text-gray-500">Загрузка...</p>
@@ -106,7 +93,8 @@ export default function CompaniesPage() {
                 >
                   <h3 className="font-semibold">{company.name}</h3>
                   <p className="text-sm text-gray-500">
-                    Создано: {new Date(company.created_at).toLocaleString()}
+                    Создано:{" "}
+                    {new Date(company.created_at).toLocaleString()}
                   </p>
                 </article>
               ))}

@@ -44,3 +44,8 @@
 ## Service Contract Recovery — Collaboration
 
 Унифицированы сервисные контракты обсуждений, сообщений и уведомлений.
+
+
+## Service Contract Recovery — Companies and Documents
+
+Унифицированы сервисные контракты компаний и документов.
