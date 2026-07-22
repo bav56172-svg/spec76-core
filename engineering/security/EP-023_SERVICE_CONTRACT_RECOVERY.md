@@ -56,3 +56,18 @@
 - [ ] мигрированы документы, коммуникации и уведомления;
 - [ ] выполнена итоговая проверка всего сервисного слоя;
 - [ ] получено утверждение Platform Owner для завершения Service Contract Recovery.
+
+## Этап 2 — Project Execution
+
+На единый сервисный контракт переведён вертикальный срез выполнения проекта:
+
+`Project → Task → Timeline → Milestone → ProjectActivity`
+
+Мигрированы:
+
+- `services/projects.ts`;
+- `services/tasks.ts`;
+- `services/timeline.ts`;
+- `services/projectActivities.ts`.
+
+Публичная форма `{ data, error }` сохранена. Схема Supabase и политики RLS не изменены.

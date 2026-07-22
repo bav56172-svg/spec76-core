@@ -349,3 +349,11 @@
 `Request → RequestAnalysis → ContractorMatch → Offer`
 
 Добавлены единые `ServiceResult<T>` и `ServiceError`. Публичная форма `{ data, error }` сохранена для совместимости интерфейса. EP-023 остаётся в статусе In Progress до миграции остальных сервисов и завершения AI API Recovery.
+
+## Service Contract Recovery — этап 2
+
+На единый `ServiceResult<T>` переведён проектный контур:
+
+`Project → Task → Timeline → Milestone → ProjectActivity`
+
+Контур сохраняет совместимость интерфейса и не требует миграции базы данных.

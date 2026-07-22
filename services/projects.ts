@@ -1,4 +1,9 @@
+import {
+  databaseFailure,
+  serviceSuccess,
+} from "@/services/serviceResult";
 import { supabase } from "@/services/supabase";
+import type { ServiceResult } from "@/types/service-result";
 import type {
   Project,
   ProjectActivityItem,
@@ -69,23 +74,44 @@ function buildActivity(
   );
 }
 
-export async function getProject(id: string) {
-  return await supabase
+export async function getProject(
+  id: string,
+): Promise<ServiceResult<Project>> {
+  const { data, error } = await supabase
     .from("projects")
     .select("*")
     .eq("id", id)
     .single<Project>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить проект.");
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function getProjectWorkspace(id: string) {
-  return await supabase
+export async function getProjectWorkspace(
+  id: string,
+): Promise<ServiceResult<ProjectWorkspace>> {
+  const { data, error } = await supabase
     .from("projects")
     .select(PROJECT_WORKSPACE_SELECT)
     .eq("id", id)
     .single<ProjectWorkspace>();
+
+  if (error) {
+    return databaseFailure(
+      error,
+      "Не удалось получить рабочее пространство проекта.",
+    );
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function getProjectExecutionWorkspace(id: string) {
+export async function getProjectExecutionWorkspace(
+  id: string,
+): Promise<ServiceResult<ProjectExecutionWorkspace>> {
   const [projectResult, tasksResult] = await Promise.all([
     getProjectWorkspace(id),
     supabase
@@ -96,12 +122,15 @@ export async function getProjectExecutionWorkspace(id: string) {
       .returns<ProjectTaskSummary[]>(),
   ]);
 
-  if (projectResult.error || !projectResult.data) {
-    return { data: null, error: projectResult.error };
+  if (projectResult.error) {
+    return projectResult;
   }
 
   if (tasksResult.error) {
-    return { data: null, error: tasksResult.error };
+    return databaseFailure(
+      tasksResult.error,
+      "Не удалось получить задачи проекта.",
+    );
   }
 
   const tasks = tasksResult.data ?? [];
@@ -112,37 +141,68 @@ export async function getProjectExecutionWorkspace(id: string) {
     activity: buildActivity(projectResult.data, tasks),
   };
 
-  return { data, error: null };
+  return serviceSuccess(data);
 }
 
 export async function createProject(
   project: Omit<Project, "id" | "created_at" | "updated_at">,
-) {
-  return await supabase
+): Promise<ServiceResult<Project>> {
+  const { data, error } = await supabase
     .from("projects")
     .insert(project)
     .select()
     .single<Project>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось создать проект.");
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function getProjects(companyId: string) {
-  return await supabase
+export async function getProjects(
+  companyId: string,
+): Promise<ServiceResult<Project[]>> {
+  const { data, error } = await supabase
     .from("projects")
     .select("*")
     .eq("company_id", companyId)
     .order("created_at", { ascending: false })
     .returns<Project[]>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить проекты.");
+  }
+
+  return serviceSuccess(data ?? []);
 }
 
-export async function updateProject(id: string, updates: Partial<Project>) {
-  return await supabase
+export async function updateProject(
+  id: string,
+  updates: Partial<Project>,
+): Promise<ServiceResult<Project>> {
+  const { data, error } = await supabase
     .from("projects")
     .update(updates)
     .eq("id", id)
     .select()
     .single<Project>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось обновить проект.");
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function deleteProject(id: string) {
-  return await supabase.from("projects").delete().eq("id", id);
+export async function deleteProject(
+  id: string,
+): Promise<ServiceResult<null>> {
+  const { error } = await supabase.from("projects").delete().eq("id", id);
+
+  if (error) {
+    return databaseFailure(error, "Не удалось удалить проект.");
+  }
+
+  return serviceSuccess(null);
 }
