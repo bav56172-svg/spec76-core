@@ -1,13 +1,13 @@
 # EP-023 — Security and Recovery Engineering Package
 
-**Версия:** 0.2  
-**Статус:** In Progress (в работе)  
-**Владелец:** Platform Owner (владелец платформы)  
-**Release:** 0.4  
-**Базовая ветка:** `recovery/op-002-repository-classification`  
-**Анализируемая ветка:** `main`  
-**Анализируемый коммит:** `1ac1f4db3038dd0db238b02ebee7c678851b047d`  
-**Следующий пересмотр:** после проверки rollback-процедуры Billing и определения следующего контура EP-023
+**Версия:** 0.3
+**Статус:** In Progress (в работе)
+**Владелец:** Platform Owner (владелец платформы)
+**Release:** 0.4
+**Базовая ветка:** `recovery/op-002-repository-classification`
+**Анализируемая ветка:** `main`
+**Анализируемый коммит:** `1ac1f4db3038dd0db238b02ebee7c678851b047d`
+**Следующий пересмотр:** перед началом следующего контура EP-023 — AI API Recovery или Service Contract Recovery
 
 ## Цель
 
@@ -304,13 +304,11 @@
 
 `engineering/security/EP-023_BILLING_RECOVERY.md`
 
-### Оставшиеся действия Billing
+### Граница завершённого контура Billing
 
-До допуска в production (продуктивную среду) остаются:
+В рамках Billing Recovery завершены проверка rollback, доставка тестовых событий через Stripe CLI и утверждение Platform Owner от 2026-07-22.
 
-1. проверить rollback (откат — возврат базы данных к состоянию до миграции) на отдельной тестовой базе;
-2. при необходимости выполнить сквозную проверку через Stripe CLI (интерфейс командной строки Stripe — средство отправки тестовых событий);
-3. получить окончательное утверждение Platform Owner.
+Это утверждение относится к безопасной миграции, RLS, серверному webhook и подтверждённому защитному отказу для неизвестного Stripe Customer. Оно не является допуском полного пользовательского платёжного сценария в production. Создание Stripe Customer, Checkout Session и успешная синхронизация заранее связанной подписки остаются отдельной Capability.
 
 ## Definition of Done (критерии завершения)
 
@@ -319,11 +317,11 @@
 - [x] проверены схема Supabase и RLS;
 - [x] выполнены Lint, TypeScript, Production Build, Diff Check и Migration Check для Billing Recovery;
 - [x] обновлён журнал Billing Recovery;
-- [ ] проверена rollback-процедура Billing на отдельной тестовой базе;
+- [x] проверена rollback-процедура Billing на отдельной тестовой базе;
 - [ ] AI API защищены аутентификацией и авторизацией;
 - [ ] сервисные контракты типизированы и согласованы;
 - [ ] обновлены итоговые инженерные журналы и индекс;
-- [ ] получено окончательное утверждение Platform Owner.
+- [x] получено утверждение Platform Owner для границ Billing Recovery.
 
 ## Статус
 
@@ -334,12 +332,12 @@
 | Billing Recovery | Восстановление подтверждено: RLS 10/10, webhook 4/4 |
 | Billing Implementation | Завершена |
 | Billing Migration Check | Завершён |
-| Billing Rollback Check | Требуется на отдельной тестовой базе |
+| Billing Rollback Check | Завершён на отдельной тестовой базе |
 | AI API Recovery | Не начато в рамках текущего подтверждённого этапа |
 | Service Contract Recovery | Не начато в рамках текущего подтверждённого этапа |
 | Documentation Update | Billing-документация синхронизирована |
-| Platform Owner approval | Требуется перед production |
+| Platform Owner approval | Получено 2026-07-22 для границ Billing Recovery |
 
 ## Главный следующий шаг
 
-Проверить rollback-процедуру Billing на отдельной тестовой базе, зафиксировать результат в инженерном журнале и передать Billing Recovery на окончательное утверждение Platform Owner.
+Провести Architecture Gate (архитектурный допуск — проверку границ, рисков и зависимостей) и выбрать следующий контур EP-023: AI API Recovery или Service Contract Recovery. Полный пользовательский платёжный сценарий оформить как отдельную Capability и не смешивать с закрытым контуром Billing Recovery.

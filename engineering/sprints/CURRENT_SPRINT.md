@@ -1,30 +1,34 @@
-# Current Sprint — Release 0.4 / Wave 1
+# Current Sprint — Release 0.4 / Security Recovery
 
 ## Goal (цель)
 
-Создать управляемый фундамент SPEC76 OS без изменения бизнес-функций и пользовательских интерфейсов.
+Восстановить критические контуры устаревшей ветки без прямого объединения с Release 0.4 и без переноса небезопасной архитектуры.
 
 ## Completed (завершено)
 
 - Release 0.4 Architecture Package (архитектурный пакет релиза 0.4).
 - OP-019 SPEC76 OS Skeleton (каркас SPEC76 OS).
+- OP-020 Documentation Standards (стандарты документации).
+- EP-021 SPEC76 Build System (система сборки SPEC76).
+- EP-022 Agent Work and Conversation Governance (управление работой агентов и перепиской).
+- EP-023 Repository Classification (классификация репозитория): 155 файлов.
+- EP-023 Billing Recovery (восстановление биллинга): RLS 10/10, webhook 4/4, rollback и Stripe CLI проверены.
+- Platform Owner 2026-07-22 утвердил границы Billing Recovery.
 
 ## In Progress (в работе)
 
-- OP-020 Documentation Standards (стандарты документации).
+- EP-023 Security and Recovery Engineering Package (инженерный пакет безопасности и восстановления).
 
 ## Next (далее)
 
-- EP-021 SPEC76 Build System (система сборки SPEC76).
-- OP-022 Engineering Workplace (инженерное рабочее место).
-- OP-023 Academy Foundation (основа академии).
-- OP-024 AI & Knowledge Foundation (основа ИИ и платформы знаний).
-- OP-025 Architecture Traceability (архитектурная трассируемость).
+- Architecture Gate (архитектурный допуск) следующего контура EP-023.
+- Выбор между AI API Recovery и Service Contract Recovery на основании рисков и зависимостей Release 0.4.
+- Отдельное проектирование Capability пользовательского платёжного сценария; не включать его автоматически в закрытую границу Billing Recovery.
 
 ## Blockers (блокеры)
 
-Нет подтверждённых блокеров для OP-020.
+Подтверждённых блокеров для нормативного закрытия контура Billing Recovery нет. Следующий контур EP-023 требует архитектурного выбора, но не повторного утверждения уже завершённых проверок Billing.
 
 ## Evidence Note (примечание о доказательствах)
 
-Закрытие Release 0.3 требует сохранения результата ручной демонстрации и отдельной проверки политик RLS. OP-020 не изменяет бизнес-код и не блокируется этой работой.
+Технические результаты Billing Recovery зафиксированы в `engineering/security/EP-023_BILLING_RECOVERY.md`. EP-023 в целом остаётся в работе, поскольку AI API Recovery и Service Contract Recovery не завершены.
