@@ -32,3 +32,7 @@
 ## Evidence Note (примечание о доказательствах)
 
 Технические результаты Billing Recovery зафиксированы в `engineering/security/EP-023_BILLING_RECOVERY.md`. EP-023 в целом остаётся в работе, поскольку AI API Recovery и Service Contract Recovery не завершены.
+
+## Service Contract Recovery — Foundation
+
+Первый кодовый этап EP-023 направлен на унификацию сервисного результата и ошибок в основном потоке заявки. Миграции базы данных не требуются.

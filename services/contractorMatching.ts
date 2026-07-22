@@ -1,3 +1,7 @@
+import {
+  databaseFailure,
+  serviceSuccess,
+} from "@/services/serviceResult";
 import { supabase } from "@/services/supabase";
 import type {
   ContractorMatch,
@@ -5,6 +9,7 @@ import type {
 } from "@/types/contractor-match";
 import type { Request } from "@/types/request";
 import type { RequestAnalysis } from "@/types/request-analysis";
+import type { ServiceResult } from "@/types/service-result";
 
 interface CompanyCandidate {
   id: string;
@@ -35,20 +40,28 @@ function buildDraft(
   equipmentValues: string[],
 ): ContractorMatchDraft | null {
   const matchedServices = intersections(analysis.services, serviceValues);
-  const matchedEquipment = intersections(analysis.equipment, equipmentValues);
+  const matchedEquipment = intersections(
+    analysis.equipment,
+    equipmentValues,
+  );
   const cityMatches =
-    Boolean(company.city) && normalize(company.city ?? "") === normalize(request.city);
+    Boolean(company.city) &&
+    normalize(company.city ?? "") === normalize(request.city);
 
   let score = 0;
   const reasons: string[] = [];
 
   if (analysis.services.length > 0 && matchedServices.length > 0) {
-    score += Math.round((matchedServices.length / analysis.services.length) * 50);
+    score += Math.round(
+      (matchedServices.length / analysis.services.length) * 50,
+    );
     reasons.push(`Совпали услуги: ${matchedServices.join(", ")}`);
   }
 
   if (analysis.equipment.length > 0 && matchedEquipment.length > 0) {
-    score += Math.round((matchedEquipment.length / analysis.equipment.length) * 30);
+    score += Math.round(
+      (matchedEquipment.length / analysis.equipment.length) * 30,
+    );
     reasons.push(`Есть техника: ${matchedEquipment.join(", ")}`);
   }
 
@@ -57,7 +70,9 @@ function buildDraft(
     reasons.push(`Работает в городе ${request.city}`);
   }
 
-  if (score === 0) return null;
+  if (score === 0) {
+    return null;
+  }
 
   return {
     company_id: company.id,
@@ -68,20 +83,31 @@ function buildDraft(
   };
 }
 
-export async function getCurrentContractorMatches(requestId: string) {
-  return await supabase
+export async function getCurrentContractorMatches(
+  requestId: string,
+): Promise<ServiceResult<ContractorMatch[]>> {
+  const { data, error } = await supabase
     .from("request_matches")
     .select("*, company:companies(id, name, city)")
     .eq("request_id", requestId)
     .eq("is_current", true)
     .order("score", { ascending: false })
     .returns<ContractorMatch[]>();
+
+  if (error) {
+    return databaseFailure(
+      error,
+      "Не удалось получить подбор исполнителей.",
+    );
+  }
+
+  return serviceSuccess(data ?? []);
 }
 
 export async function runContractorMatching(
   request: Request,
   analysis: RequestAnalysis,
-) {
+): Promise<ServiceResult<ContractorMatch[]>> {
   const companiesResult = await supabase
     .from("companies")
     .select("id, name, city, status")
@@ -89,14 +115,17 @@ export async function runContractorMatching(
     .returns<CompanyCandidate[]>();
 
   if (companiesResult.error) {
-    return { data: null, error: companiesResult.error };
+    return databaseFailure(
+      companiesResult.error,
+      "Не удалось получить компании.",
+    );
   }
 
   const companies = companiesResult.data ?? [];
   const companyIds = companies.map((company) => company.id);
 
   if (companyIds.length === 0) {
-    return { data: [] as ContractorMatch[], error: null };
+    return serviceSuccess([]);
   }
 
   const [servicesResult, equipmentResult] = await Promise.all([
@@ -113,11 +142,17 @@ export async function runContractorMatching(
   ]);
 
   if (servicesResult.error) {
-    return { data: null, error: servicesResult.error };
+    return databaseFailure(
+      servicesResult.error,
+      "Не удалось получить услуги компаний.",
+    );
   }
 
   if (equipmentResult.error) {
-    return { data: null, error: equipmentResult.error };
+    return databaseFailure(
+      equipmentResult.error,
+      "Не удалось получить технику компаний.",
+    );
   }
 
   const drafts = companies
@@ -147,11 +182,14 @@ export async function runContractorMatching(
     .eq("is_current", true);
 
   if (deactivateResult.error) {
-    return { data: null, error: deactivateResult.error };
+    return databaseFailure(
+      deactivateResult.error,
+      "Не удалось обновить предыдущий подбор.",
+    );
   }
 
   if (drafts.length === 0) {
-    return { data: [] as ContractorMatch[], error: null };
+    return serviceSuccess([]);
   }
 
   const insertResult = await supabase
@@ -167,5 +205,12 @@ export async function runContractorMatching(
     .order("score", { ascending: false })
     .returns<ContractorMatch[]>();
 
-  return insertResult;
+  if (insertResult.error) {
+    return databaseFailure(
+      insertResult.error,
+      "Не удалось сохранить подбор исполнителей.",
+    );
+  }
+
+  return serviceSuccess(insertResult.data ?? []);
 }

@@ -101,3 +101,13 @@
 - Полный пользовательский платёжный сценарий не включён в утверждённую границу и требует отдельной Capability.
 - EP-023 остаётся в работе до завершения или отдельного решения по AI API Recovery и Service Contract Recovery.
 - Следующий главный шаг: Architecture Gate следующего контура EP-023.
+
+## 2026-07-22 — EP-023 Service Contract Recovery — этап 1
+
+- выполнен Architecture Readiness Check;
+- выбран поток Request → RequestAnalysis → ContractorMatch → Offer;
+- добавлен единый ServiceResult;
+- добавлен единый ServiceError;
+- мигрированы четыре сервиса;
+- схема Supabase и RLS не изменялись;
+- Service Contract Recovery остаётся в работе.

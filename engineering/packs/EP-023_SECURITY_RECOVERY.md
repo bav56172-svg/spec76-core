@@ -341,3 +341,11 @@
 ## Главный следующий шаг
 
 Провести Architecture Gate (архитектурный допуск — проверку границ, рисков и зависимостей) и выбрать следующий контур EP-023: AI API Recovery или Service Contract Recovery. Полный пользовательский платёжный сценарий оформить как отдельную Capability и не смешивать с закрытым контуром Billing Recovery.
+
+## Service Contract Recovery — этап 1
+
+Начат первый вертикальный срез восстановления сервисных контрактов для потока:
+
+`Request → RequestAnalysis → ContractorMatch → Offer`
+
+Добавлены единые `ServiceResult<T>` и `ServiceError`. Публичная форма `{ data, error }` сохранена для совместимости интерфейса. EP-023 остаётся в статусе In Progress до миграции остальных сервисов и завершения AI API Recovery.

@@ -1,24 +1,32 @@
+import {
+  databaseFailure,
+  serviceFailure,
+  serviceSuccess,
+} from "@/services/serviceResult";
 import { supabase } from "@/services/supabase";
 import type { Request, RequestCreateInput } from "@/types/request";
+import type { ServiceResult } from "@/types/service-result";
 
-export async function createRequest(input: RequestCreateInput) {
+export async function createRequest(
+  input: RequestCreateInput,
+): Promise<ServiceResult<Request>> {
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
   if (userError) {
-    return { data: null, error: userError };
+    return databaseFailure(userError, "Не удалось проверить пользователя.");
   }
 
   if (!user) {
-    return {
-      data: null,
-      error: new Error("Для создания заявки необходимо войти в систему."),
-    };
+    return serviceFailure(
+      "AUTH_REQUIRED",
+      "Для создания заявки необходимо войти в систему.",
+    );
   }
 
-  return await supabase
+  const { data, error } = await supabase
     .from("requests")
     .insert({
       customer_id: user.id,
@@ -32,30 +40,57 @@ export async function createRequest(input: RequestCreateInput) {
     })
     .select("*")
     .single<Request>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось создать заявку.");
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function getRequest(id: string) {
-  return await supabase
+export async function getRequest(
+  id: string,
+): Promise<ServiceResult<Request>> {
+  const { data, error } = await supabase
     .from("requests")
     .select("*")
     .eq("id", id)
     .single<Request>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить заявку.");
+  }
+
+  return serviceSuccess(data);
 }
 
-export async function getMyRequests() {
+export async function getMyRequests(): Promise<ServiceResult<Request[]>> {
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    return { data: null, error: userError ?? new Error("Пользователь не найден.") };
+  if (userError) {
+    return databaseFailure(userError, "Не удалось проверить пользователя.");
   }
 
-  return await supabase
+  if (!user) {
+    return serviceFailure(
+      "AUTH_REQUIRED",
+      "Пользователь не найден.",
+    );
+  }
+
+  const { data, error } = await supabase
     .from("requests")
     .select("*")
     .eq("customer_id", user.id)
     .order("created_at", { ascending: false })
     .returns<Request[]>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить заявки.");
+  }
+
+  return serviceSuccess(data ?? []);
 }

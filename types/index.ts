@@ -1,3 +1,4 @@
+export * from "./service-result";
 export * from "./contractor-match";
 export * from "./ai-recommendation";
 export * from "./chat";
