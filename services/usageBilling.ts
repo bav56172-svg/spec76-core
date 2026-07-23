@@ -48,9 +48,12 @@ export class UsageBilling {
   }
 
   static async track(
-    _userId: string,
-    _type: string,
+    userId: string,
+    type: string,
   ): Promise<ServiceResult<never>> {
+    void userId;
+    void type;
+
     return serviceFailure(
       "CONFLICT",
       "Учёт использования ИИ требует атомарной серверной операции. Возможность будет включена в AI API Recovery.",
