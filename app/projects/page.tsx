@@ -3,48 +3,48 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { getCurrentUserCompany } from "@/services/companies";
 import { getProjects } from "@/services/projects";
-import { supabase } from "@/services/supabase";
 import type { Project } from "@/types/project";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function fetchProjects() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const companyResult = await getCurrentUserCompany();
 
       if (!active) return;
 
-      if (!user) {
+      if (companyResult.error) {
+        if (companyResult.error.code !== "AUTH_REQUIRED") {
+          setErrorMessage(companyResult.error.message);
+        }
+
         setLoading(false);
         return;
       }
 
-      const { data: company } = await supabase
-        .from("companies")
-        .select("id")
-        .eq("owner_id", user.id)
-        .limit(1)
-        .maybeSingle();
-
-      if (!active) return;
-
-      if (!company) {
+      if (!companyResult.data) {
         setLoading(false);
         return;
       }
 
-      const { data } = await getProjects(company.id);
+      const projectsResult = await getProjects(companyResult.data.id);
 
       if (!active) return;
 
-      setProjects((data ?? []) as Project[]);
+      if (projectsResult.error) {
+        setErrorMessage(projectsResult.error.message);
+        setLoading(false);
+        return;
+      }
+
+      setProjects(projectsResult.data);
       setLoading(false);
     }
 
@@ -71,7 +71,13 @@ export default function ProjectsPage() {
 
         {loading ? <p className="mt-8">Загрузка...</p> : null}
 
-        {!loading && projects.length === 0 ? (
+        {!loading && errorMessage ? (
+          <div className="mt-8 rounded-xl bg-white p-6 shadow">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {!loading && !errorMessage && projects.length === 0 ? (
           <div className="mt-8 rounded-xl bg-white p-6 shadow">
             Заявок пока нет.
           </div>
@@ -84,7 +90,9 @@ export default function ProjectsPage() {
               href={`/projects/${project.id}`}
               className="block rounded-xl bg-white p-6 shadow transition hover:shadow-md"
             >
-              <h2 className="text-xl font-semibold">{project.title}</h2>
+              <h2 className="text-xl font-semibold">
+                {project.title}
+              </h2>
               <p className="mt-2 text-gray-600">
                 {project.description ?? "Описание не указано"}
               </p>

@@ -49,3 +49,8 @@
 ## Service Contract Recovery — Companies and Documents
 
 Унифицированы сервисные контракты компаний и документов.
+
+
+## Service Contract Recovery — Application Boundary Cleanup
+
+Устранён прямой доступ страниц авторизации и проектов к Supabase. Небезопасное увеличение счётчика ИИ отключено до AI API Recovery.
