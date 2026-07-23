@@ -54,3 +54,9 @@
 ## Service Contract Recovery — Application Boundary Cleanup
 
 Устранён прямой доступ страниц авторизации и проектов к Supabase. Небезопасное увеличение счётчика ИИ отключено до AI API Recovery.
+
+## AI API Recovery — текущий следующий контур
+
+Architecture Gate завершён 2026-07-23. Утверждена C-006 AI Request Foundation.
+
+Следующая реализация начинается с Data Security Foundation: фактическая проверка Supabase-зависимостей, проект миграции `ai_usage`, RLS, атомарные функции, rollback и тестовый план. AI provider и пользовательский маршрут не подключаются до прохождения этого этапа.

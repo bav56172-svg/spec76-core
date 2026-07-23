@@ -371,3 +371,15 @@
 ## Service Contract Recovery — этап 5
 
 Очищена граница приложения: авторизация, список проектов и учёт использования ИИ переведены на сервисный слой. Атомарный учёт ИИ зафиксирован как обязательная зависимость AI API Recovery.
+
+## AI API Recovery — Architecture Gate
+
+Architecture Gate от 2026-07-23 завершён. Platform Owner утвердил минимальную границу C-006 AI Request Foundation.
+
+Подтверждено, что активные AI API, AI provider, миграция `ai_usage`, RLS и атомарный учёт ещё не реализованы. Реализация начинается с проверки фактической Supabase-схемы, миграции, RLS и серверной атомарной операции. Автономные действия не входят в первый этап.
+
+Документы:
+
+- `engineering/capabilities/C-006_AI_REQUEST_FOUNDATION.md`;
+- `engineering/security/EP-023_AI_API_RECOVERY.md`;
+- ADR AI Request Foundation в `engineering/decisions/`.

@@ -147,3 +147,14 @@
 - неатомарная запись ai_usage отключена;
 - схема Supabase и RLS не изменялись;
 - следующий шаг — повторный итоговый аудит.
+
+## 2026-07-23 — AI API Recovery Architecture Gate
+
+- Git и Release 0.4 подтверждены на коммите `7f5de9059007eeb6e1b0859f8c8db5d5ea27d08e`.
+- Активные AI API routes отсутствуют.
+- AI provider не подключён.
+- Миграция, RLS и атомарные функции `ai_usage` отсутствуют.
+- Lint, TypeScript и Production Build прошли.
+- Platform Owner утвердил C-006 AI Request Foundation.
+- Подготовлены Capability, ADR и EP-023 AI API Recovery.
+- Следующий шаг: Data Security Foundation после проверки фактической Supabase-схемы.
