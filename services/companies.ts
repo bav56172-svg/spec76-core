@@ -10,6 +10,20 @@ import type {
 } from "@/types/company";
 import type { ServiceResult } from "@/types/service-result";
 
+function createCompanySlug(name: string): string {
+  const normalizedName = name
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+
+  const prefix = normalizedName || "company";
+  const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 12);
+
+  return `${prefix}-${suffix}`;
+}
+
 export async function listCompanies(): Promise<ServiceResult<Company[]>> {
   const { data, error } = await supabase
     .from("companies")
@@ -84,15 +98,21 @@ export async function createCompany(
     );
   }
 
+  const name = input.name.trim();
+
+  if (!name) {
+    return serviceFailure(
+      "VALIDATION_ERROR",
+      "Введите название компании.",
+    );
+  }
+
   const { data, error } = await supabase
     .from("companies")
     .insert({
       owner_id: user.id,
-      name: input.name.trim(),
-      description: input.description?.trim() || null,
-      phone: input.phone?.trim() || null,
-      email: input.email?.trim() || null,
-      city: input.city?.trim() || null,
+      name,
+      slug: createCompanySlug(name),
     })
     .select("*")
     .single<Company>();
