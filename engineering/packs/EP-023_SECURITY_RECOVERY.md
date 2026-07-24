@@ -286,6 +286,19 @@
 
 `supabase/migrations/202607190001_ep_023_billing_recovery.sql`
 
+### Восстановление истории миграций TEST
+
+24 июля 2026 года в связанном TEST-проекте Supabase `spec76-ep023-test` подтверждено устранение Schema drift (расхождение схемы — фактическая структура базы и удалённая история миграций ранее не совпадали).
+
+Подтверждено:
+
+- объекты Billing Recovery уже существовали в TEST и соответствовали миграции `202607190001_ep_023_billing_recovery.sql`;
+- повторное выполнение SQL миграции не потребовалось;
+- выполнена команда `supabase migration repair 202607190001 --status applied --linked`;
+- `supabase migration list --linked` подтвердил совпадение Local и Remote для версии `202607190001`;
+- `supabase db push --linked --dry-run` завершился сообщением `Remote database is up to date`;
+- Production не затрагивался.
+
 ### Результаты проверки
 
 Подтверждено:
