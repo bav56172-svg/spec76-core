@@ -158,3 +158,15 @@
 - Platform Owner утвердил C-006 AI Request Foundation.
 - Подготовлены Capability, ADR и EP-023 AI API Recovery.
 - Следующий шаг: Data Security Foundation после проверки фактической Supabase-схемы.
+
+## 2026-07-25 — EP-024 Platform Domain Foundation — Execution
+
+- Platform Owner подтвердил переход к исполнению сообщением «Приступай».
+- Статус ADR-024 изменён с `Proposed` на `Accepted`.
+- Статус EP-024 изменён с `Architecture` на `Execution`.
+- Подтверждено наличие двух миграций EP-024 в GitHub.
+- Подтверждено применение миграций к связанному Supabase-проекту и совпадение истории миграций.
+- Lint, Type Check и Production Build прошли.
+- Автоматический `npm test` script отсутствует.
+- EP-024 остаётся в работе до итогового Security and RLS Audit.
+- Следующий главный шаг: функциональная проверка положительных и отрицательных сценариев RLS.

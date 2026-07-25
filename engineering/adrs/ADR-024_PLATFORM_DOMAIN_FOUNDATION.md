@@ -1,6 +1,6 @@
 # ADR-024 — Platform Domain Foundation
 
-**Статус:** Proposed (предложено)
+**Статус:** Accepted (принято)
 **Дата:** 2026-07-24
 **Владелец решения:** Platform Owner
 **Release:** 0.4
