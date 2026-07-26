@@ -10,7 +10,14 @@ if (!webhookSecret) {
   process.exit(1);
 }
 
-const stripe = new Stripe("REMOVED_ROTATED_STRIPE_SECRET");
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim();
+
+if (!stripeSecretKey) {
+  console.error("Missing required environment variable: STRIPE_SECRET_KEY");
+  process.exit(1);
+}
+
+const stripe = new Stripe(stripeSecretKey);
 const eventId = `evt_ep023_local_${Date.now()}`;
 const payload = JSON.stringify({
   id: eventId,
