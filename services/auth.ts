@@ -17,8 +17,16 @@ export async function requestEmailSignIn(
     );
   }
 
+  const emailRedirectTo =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/`
+      : undefined;
+
   const { error } = await supabase.auth.signInWithOtp({
     email: normalizedEmail,
+    options: {
+      emailRedirectTo,
+    },
   });
 
   if (error) {

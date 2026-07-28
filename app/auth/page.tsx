@@ -7,22 +7,29 @@ import { requestEmailSignIn } from "@/services/auth";
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
 
   async function handleSignIn() {
     if (submitting) return;
 
     setSubmitting(true);
+    setMessage("");
 
-    const { error } = await requestEmailSignIn(email);
+    try {
+      const { error } = await requestEmailSignIn(email);
 
-    setSubmitting(false);
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
 
-    if (error) {
-      alert(error.message);
-      return;
+      setMessage("Ссылка для входа отправлена. Проверьте почту.");
+    } catch (error) {
+      console.error("Email sign-in failed:", error);
+      setMessage("Произошла неожиданная ошибка. Повторите попытку.");
+    } finally {
+      setSubmitting(false);
     }
-
-    alert("Проверьте почту.");
   }
 
   return (
@@ -42,10 +49,16 @@ export default function AuthPage() {
           type="button"
           onClick={() => void handleSignIn()}
           disabled={submitting}
-          className="w-full rounded bg-white p-3 text-black disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded bg-black p-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? "Отправляем ссылку..." : "Войти"}
         </button>
+
+        {message ? (
+          <p className="text-sm text-gray-700" role="status">
+            {message}
+          </p>
+        ) : null}
       </div>
     </main>
   );
