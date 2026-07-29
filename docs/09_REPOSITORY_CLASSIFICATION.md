@@ -161,7 +161,7 @@ Safe after creating a recovery tag/branch and confirming the application still b
 - [x] Export and inspect the TEST Supabase schema, policies, authorization-function grants, and migration history.
 - [ ] Export and compare the PROD Supabase schema before any PROD migration action.
 - [x] Run `npm run lint`, TypeScript validation, and `npm run build` on the current branch after this documentation update.
-- [ ] Confirm `.env.local`, `.next`, and `node_modules` are ignored by Git.
+- [x] Confirm `.env.local`, `.next`, and `node_modules` are ignored by Git.
 - [ ] Inspect all imports that reference archive candidates.
 - [ ] Create a reversible archive branch or tag before moving files.
 
