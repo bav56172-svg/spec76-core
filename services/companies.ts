@@ -107,18 +107,34 @@ export async function createCompany(
     );
   }
 
-  const { data, error } = await supabase
+  const slug = createCompanySlug(name);
+
+  const { error: insertError } = await supabase
     .from("companies")
     .insert({
       owner_id: user.id,
       name,
-      slug: createCompanySlug(name),
-    })
+      slug,
+    });
+
+  if (insertError) {
+    return databaseFailure(
+      insertError,
+      "Не удалось создать компанию.",
+    );
+  }
+
+  const { data, error: selectError } = await supabase
+    .from("companies")
     .select("*")
+    .eq("slug", slug)
     .single<Company>();
 
-  if (error) {
-    return databaseFailure(error, "Не удалось создать компанию.");
+  if (selectError) {
+    return databaseFailure(
+      selectError,
+      "Компания создана, но не удалось получить её данные.",
+    );
   }
 
   return serviceSuccess(data);
