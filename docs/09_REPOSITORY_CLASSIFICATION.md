@@ -129,7 +129,7 @@ TEST verification completed on 2026-07-30:
 - `prevent_project_company_reassignment()` and its trigger exist;
 - internal trigger functions are not executable by `anon` or `authenticated`;
 - authorization helpers are not executable by `anon` and remain executable by `authenticated`;
-- verification dump checksum: `42db572de6e48cbeb44de1992972cf42026f67925410cbd26e45ff29b52b8a66` for the pre-migration capture; the post-migration dump remains local audit evidence and is excluded from Git.
+- pre-migration and post-migration dumps remain local audit evidence and are excluded from Git.
 
 No database migration is to be deleted or rewritten until the PROD Supabase schema is separately exported and compared.
 
@@ -160,7 +160,7 @@ Safe after creating a recovery tag/branch and confirming the application still b
 
 - [x] Export and inspect the TEST Supabase schema, policies, authorization-function grants, and migration history.
 - [ ] Export and compare the PROD Supabase schema before any PROD migration action.
-- [ ] Run `npm run lint`, TypeScript validation, and `npm run build` on the current branch after this documentation update.
+- [x] Run `npm run lint`, TypeScript validation, and `npm run build` on the current branch after this documentation update.
 - [ ] Confirm `.env.local`, `.next`, and `node_modules` are ignored by Git.
 - [ ] Inspect all imports that reference archive candidates.
 - [ ] Create a reversible archive branch or tag before moving files.
