@@ -1,7 +1,7 @@
 # SPEC76 Repository Classification
 
-Status: OP-002 in progress
-Scope: current `main` repository state
+Status: OP-002 in progress — TEST database baseline verified
+Scope: current `engineering/ep-024-platform-domain-foundation` branch state
 Goal: separate MVP core from platform support, future work, and experimental code before cleanup.
 
 ## Classification rules
@@ -120,9 +120,18 @@ Status: `ARCHIVE`.
 | `docs/database/migrations/002_create_projects.sql` | CORE / MOVE / REWRITE | Move to `database/migrations/`; reconsider `projects` as customer jobs/orders. |
 | `docs/database/migrations/003_projects_rls.sql` | CORE / MOVE / REVIEW | Move to `database/migrations/`; verify policies against roles and ownership. |
 | Missing canonical database directory | CRITICAL | Create `database/migrations`, `database/schema`, and optional `database/seed`. |
-| Missing schema baseline | CRITICAL | Export current Supabase schema before destructive changes. |
+| Missing schema baseline | RESOLVED FOR TEST | TEST `public` schema exported and verified after migration `20260728000100`. |
 
-No database migration is to be deleted or rewritten until the live Supabase schema is exported and compared.
+TEST verification completed on 2026-07-30:
+
+- linked Supabase project: `dmcqsxtvosuaicqwuygk`;
+- local and remote migration histories match through `20260728000100`;
+- `prevent_project_company_reassignment()` and its trigger exist;
+- internal trigger functions are not executable by `anon` or `authenticated`;
+- authorization helpers are not executable by `anon` and remain executable by `authenticated`;
+- verification dump checksum: `42db572de6e48cbeb44de1992972cf42026f67925410cbd26e45ff29b52b8a66` for the pre-migration capture; the post-migration dump remains local audit evidence and is excluded from Git.
+
+No database migration is to be deleted or rewritten until the PROD Supabase schema is separately exported and compared.
 
 ## Documentation
 
@@ -149,11 +158,12 @@ Safe after creating a recovery tag/branch and confirming the application still b
 
 ## Blocking checks before OP-003
 
-- Export and inspect the live Supabase schema, policies, and authentication configuration.
-- Run `npm run lint` and `npm run build` on the current branch.
-- Confirm `.env.local`, `.next`, and `node_modules` are ignored by Git.
-- Inspect all imports that reference archive candidates.
-- Create a reversible archive branch or tag before moving files.
+- [x] Export and inspect the TEST Supabase schema, policies, authorization-function grants, and migration history.
+- [ ] Export and compare the PROD Supabase schema before any PROD migration action.
+- [ ] Run `npm run lint`, TypeScript validation, and `npm run build` on the current branch after this documentation update.
+- [ ] Confirm `.env.local`, `.next`, and `node_modules` are ignored by Git.
+- [ ] Inspect all imports that reference archive candidates.
+- [ ] Create a reversible archive branch or tag before moving files.
 
 ## OP-002 exit criteria
 
@@ -161,6 +171,6 @@ OP-002 is complete when:
 
 - every active directory has one classification;
 - source-level review resolves all `REVIEW` entries required for the MVP;
-- the Supabase schema is captured;
+- the TEST and PROD Supabase schemas are captured and compared;
 - the cleanup plan is reversible;
-- the current application passes lint and production build before cleanup.
+- the current application passes lint, TypeScript validation, and production build before cleanup.
