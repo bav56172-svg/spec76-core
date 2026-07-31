@@ -14,6 +14,7 @@
 - `SPEC76-EP-023` Repository Classification (классификация репозитория): 155 файлов.
 - `SPEC76-EP-023` Billing Recovery (восстановление биллинга): RLS 10/10, webhook 4/4, rollback и Stripe CLI проверены.
 - Platform Owner 2026-07-22 утвердил границы Billing Recovery.
+- Platform Owner 2026-07-31 утвердил ADR-024 и разделение Greenfield migration и Upgrade migration.
 
 ## In Progress (в работе)
 
@@ -28,12 +29,12 @@
 
 ## Blockers (блокеры)
 
-Подтверждённых внешних блокеров для `SPEC76-EP-024` не зафиксировано. Следующий контур `SPEC76-EP-023` имеет архитектурную зависимость от завершения и утверждения платформенного доменного ядра.
+Внешних блокеров для `SPEC76-EP-024` не зафиксировано. SQL Implementation заблокирована внутренним Architecture Gate до завершения Documentation Recovery, Data Readiness Audit и проектирования совместимой Upgrade migration. Следующий контур `SPEC76-EP-023` зависит от завершения применимых проверок EP-024.
 
 ## Evidence Note (примечание о доказательствах)
 
 - Паспорт активного пакета: `engineering/packs/EP-024_PLATFORM_DOMAIN_FOUNDATION.md`.
-- Архитектурное решение: `engineering/adrs/ADR-024_PLATFORM_DOMAIN_FOUNDATION.md`.
+- Архитектурное решение: `engineering/adr/ADR-024_PLATFORM_DOMAIN_FOUNDATION.md`.
 - Технические результаты Billing Recovery: `engineering/security/EP-023_BILLING_RECOVERY.md`.
 - `SPEC76-EP-023` в целом остаётся в работе, поскольку AI API Recovery не завершён.
 

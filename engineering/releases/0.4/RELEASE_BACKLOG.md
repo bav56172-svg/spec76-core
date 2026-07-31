@@ -2,6 +2,7 @@
 
 ## Wave 1 — Identity & Access
 
+- EP-024 Platform Domain Foundation (фундамент домена платформы): профили, компании, членство, проекты, Greenfield migration и Upgrade migration.
 - OP-019 Role Model Foundation (основа ролевой модели).
 - OP-020 Organization Membership (членство в организациях).
 - OP-021 Permission Enforcement (применение разрешений).
