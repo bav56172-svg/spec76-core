@@ -2,7 +2,7 @@
 
 | Поле | Значение |
 |---|---|
-| Status (статус) | Draft — execution not authorized |
+| Status (статус) | Completed — PROD upgrade verified |
 | Owner (владелец) | Platform Owner |
 | Release (релиз) | 0.4 |
 | Target (целевая среда) | PROD `ficjhafnnrznfxgezfay` |
@@ -24,7 +24,7 @@
 - Целостность владельцев и внешних связей подтверждена.
 - `profiles` и `company_members` отсутствуют.
 - Публичное чтение компаний должно быть удалено.
-- PROD не изменён миграцией EP-024.
+- PROD изменён только Upgrade migration `20260801000100_ep024_prod_compatible_upgrade.sql` после успешной репетиции и проверки.
 
 ## 3. Запрещённые действия
 
@@ -168,7 +168,8 @@ git status --short
 
 ```text
 Package prepared: YES
-Local rehearsal: NOT PERFORMED
-PROD execution: NOT AUTHORIZED
-PROD modified by EP-024: NO
+Local rehearsal: COMPLETED
+PROD execution: COMPLETED
+PROD modified by EP-024: YES
+Verification: PASSED
 ```
