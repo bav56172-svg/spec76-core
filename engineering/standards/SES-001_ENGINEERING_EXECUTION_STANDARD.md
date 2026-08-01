@@ -97,6 +97,41 @@ Platform Owner окончательно утверждает архитекту�
 
 После утверждения Engineering Lead самостоятельно выполняет действия внутри согласованного пакета.
 
+## Pull Request Review Boundary (граница проверки Pull Request)
+
+### Author (автор изменения)
+
+Author prepares the change and provides required evidence.
+
+Author cannot approve own Pull Request.
+
+### Technical Reviewer (технический проверяющий)
+
+Technical Reviewer validates:
+
+- change scope;
+- diff;
+- required checks;
+- compliance with SES-001.
+
+Technical Reviewer does not replace Platform Owner decisions.
+
+### Platform Owner (владелец платформы)
+
+Platform Owner approves:
+
+- architecture changes;
+- governance changes;
+- security-impacting decisions.
+
+### Merge Requirement (требование слияния)
+
+A Pull Request may be merged only when:
+
+- required checks pass;
+- required approvals are present;
+- evidence is recorded.
+
 ### Rule 9 — Finish Means Finish (завершение означает завершение)
 
 Пакет завершён только после применимых этапов:
