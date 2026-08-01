@@ -1,200 +1,188 @@
 "use client";
 
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function ProjectExecutionPage() {
-  const [project, setProject] = useState<any>(null);
-  const [tasks, setTasks] = useState<any[]>([]);
+import { getProjectActivities } from "@/services/projectActivities";
+import { getProjectWorkspace } from "@/services/projects";
+import type { ProjectActivity } from "@/types/project-activity";
+import type { ProjectStatus, ProjectWorkspace } from "@/types/project";
+
+const STATUS_LABELS: Record<ProjectStatus, string> = {
+  draft: "Черновик",
+  published: "Опубликован",
+  active: "Активен",
+  in_progress: "В работе",
+  completed: "Завершён",
+  cancelled: "Отменён",
+  archived: "В архиве",
+};
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleString("ru-RU");
+}
+
+export default function ProjectDetailPage() {
+  const params = useParams<{ id: string }>();
+  const projectId = params.id;
+
+  const [project, setProject] = useState<ProjectWorkspace | null>(null);
+  const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const [activeTask, setActiveTask] = useState<any>(null);
-
-  // 🟢 LOAD PROJECT
   useEffect(() => {
-    async function loadProject() {
-      try {
-        const res = await fetch("/api/projects/current");
-        const data = await res.json();
+    let active = true;
 
-        setProject(data.project);
-        setTasks(data.tasks || []);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+    void Promise.all([
+      getProjectWorkspace(projectId),
+      getProjectActivities(projectId),
+    ]).then(([projectResult, activityResult]) => {
+      if (!active) return;
+
+      if (projectResult.error || !projectResult.data) {
+        setError(projectResult.error?.message ?? "Проект не найден.");
+        setProject(null);
+      } else {
+        setProject(projectResult.data);
+        setError(null);
       }
-    }
 
-    loadProject();
-  }, []);
+      if (!activityResult.error && activityResult.data) {
+        setActivities(activityResult.data);
+      }
 
-  // 🟢 AI TASK GENERATION
-  async function handleAIGenerate() {
-    if (!aiPrompt.trim()) return;
-
-    setAiLoading(true);
-
-    try {
-      const res = await fetch("/api/ai/generate-tasks", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prompt: aiPrompt,
-          projectId: project?.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      setTasks((prev) => [...prev, ...(data.tasks || [])]);
-      setAiPrompt("");
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  // 🟢 RUN AGENTS CHECK
-  async function runAgents(task: any) {
-    const res = await fetch("/api/agents/task-check", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        task,
-      }),
+      setLoading(false);
     });
 
-    return await res.json();
-  }
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
 
-  // 🟢 EXECUTE TASK FLOW
-  async function executeTask(task: any) {
-    setActiveTask(task);
+  if (loading) return <main className="p-8">Загрузка рабочего пространства...</main>;
 
-    const agentResult = await runAgents(task);
-
-    console.log("AGENT RESULT:", agentResult);
-
-    // here later: human-in-loop + execution engine
-  }
-
-  if (loading) {
-    return <div className="p-6">Loading project...</div>;
+  if (error || !project) {
+    return (
+      <main className="mx-auto max-w-3xl p-8">
+        <div className="rounded-xl border bg-white p-6 shadow">
+          <h1 className="text-2xl font-bold">Проект не найден</h1>
+          <p className="mt-3 text-gray-600">{error ?? "Проект недоступен."}</p>
+          <Link href="/projects" className="mt-6 inline-block rounded-lg bg-slate-900 px-4 py-2 text-white">
+            Вернуться к проектам
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="rounded-2xl bg-slate-950 p-6 text-white shadow-sm sm:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-sky-300">
+                Execution Workspace (рабочее пространство выполнения)
+              </p>
+              <h1 className="mt-2 text-3xl font-bold">{project.title}</h1>
+              <p className="mt-3 max-w-3xl text-slate-300">
+                {project.description || project.request?.description || "Описание проекта пока не добавлено."}
+              </p>
+            </div>
+            <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold">
+              {STATUS_LABELS[project.status]}
+            </span>
+          </div>
+        </header>
 
-      {/* 🟢 PROJECT HEADER */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-        <h1 className="text-xl font-bold">
-          {project?.name || "Project"}
-        </h1>
+        <section className="grid gap-4 md:grid-cols-3">
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Исполнитель</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">{project.company?.name ?? "Компания не определена"}</h2>
+            <p className="mt-2 text-sm text-slate-600">{project.company?.city ?? "Город не указан"}</p>
+          </article>
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Стоимость</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">
+              {project.accepted_offer ? `${project.accepted_offer.price.toLocaleString("ru-RU")} ₽` : "Не определена"}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {project.accepted_offer?.proposed_days ? `Срок: ${project.accepted_offer.proposed_days} дн.` : "Срок не указан"}
+            </p>
+          </article>
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm text-slate-500">Исходная заявка</p>
+            <h2 className="mt-2 text-xl font-semibold text-slate-900">{project.request?.title ?? "Заявка не связана"}</h2>
+            <p className="mt-2 text-sm text-slate-600">{project.request?.city ?? "Город не указан"}</p>
+          </article>
+        </section>
 
-        <p className="text-sm text-gray-500">
-          SPEC76 Execution Dashboard
-        </p>
-      </div>
-
-      {/* 🧠 AI INPUT */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-        <h2 className="font-bold mb-2">🧠 AI Task Generator</h2>
-
-        <div className="flex gap-2">
-          <input
-            className="w-full rounded border p-2"
-            placeholder="Describe what needs to be done..."
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
-          />
-
-          <button
-            onClick={handleAIGenerate}
-            className="rounded bg-purple-600 px-4 py-2 text-white"
-          >
-            {aiLoading ? "Generating..." : "Generate"}
-          </button>
-        </div>
-      </div>
-
-      {/* 🟢 TASK BOARD */}
-      <div className="grid grid-cols-3 gap-4">
-
-        {/* TODO */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">Todo</h3>
-
-          {tasks
-            .filter((t) => t.status === "todo")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p className="font-medium">{task.title}</p>
-
-                <button
-                  onClick={() => executeTask(task)}
-                  className="mt-2 text-sm text-blue-600"
-                >
-                  Run Execution
-                </button>
+        <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          <div className="space-y-6">
+            <article className="rounded-2xl bg-white p-6 shadow-sm">
+              <h2 className="text-xl font-semibold text-slate-900">Управление выполнением</h2>
+              <p className="mt-1 text-sm text-slate-600">Основные рабочие модули проекта собраны в одном месте.</p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <Link href={`/projects/${project.id}/tasks`} className="rounded-xl border border-sky-200 bg-sky-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-sky-950">Задачи и этапы</h3>
+                  <p className="mt-2 text-sm text-sky-900">Планирование, статусы и контроль выполнения работ.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/docs`} className="rounded-xl border border-amber-200 bg-amber-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-amber-950">Документы</h3>
+                  <p className="mt-2 text-sm text-amber-900">Рабочие материалы и документы проекта.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/timeline`} className="rounded-xl border border-violet-200 bg-violet-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-violet-950">Временная шкала</h3>
+                  <p className="mt-2 text-sm text-violet-900">Этапы, прогресс и контрольные результаты проекта.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/notifications`} className="rounded-xl border border-rose-200 bg-rose-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-rose-950">Уведомления</h3>
+                  <p className="mt-2 text-sm text-rose-900">Персональные сообщения о важных событиях проекта.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/governance`} className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-emerald-950">Контроль проекта</h3>
+                  <p className="mt-2 text-sm text-emerald-900">Правила, решения и контрольные точки выполнения.</p>
+                </Link>
+                <Link href={`/projects/${project.id}/communication`} className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 p-5 transition hover:shadow-md">
+                  <h3 className="font-semibold text-fuchsia-950">Коммуникации проекта</h3>
+                  <p className="mt-2 text-sm text-fuchsia-900">Диалоги, сообщения и обсуждение рабочих объектов.</p>
+                </Link>
               </div>
-            ))}
-        </div>
+            </article>
 
-        {/* IN PROGRESS */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">In Progress</h3>
+            {project.accepted_offer?.message && (
+              <article className="rounded-2xl bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-semibold text-slate-900">Условия предложения</h2>
+                <p className="mt-4 whitespace-pre-wrap text-slate-700">{project.accepted_offer.message}</p>
+              </article>
+            )}
+          </div>
 
-          {tasks
-            .filter((t) => t.status === "in_progress")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p>{task.title}</p>
+          <aside className="rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-slate-900">Activity Feed (лента активности)</h2>
+            {activities.length === 0 ? (
+              <p className="mt-5 text-sm text-slate-600">События появятся после применения миграции и начала работы с проектом.</p>
+            ) : (
+              <div className="mt-5 space-y-5">
+                {activities.map((item) => (
+                  <div key={item.id} className="border-l-2 border-sky-200 pl-4">
+                    <h3 className="font-medium text-slate-900">{item.title}</h3>
+                    {item.description && <p className="mt-1 text-sm text-slate-600">{item.description}</p>}
+                    <p className="mt-2 text-xs text-slate-400">{formatDate(item.created_at)}</p>
+                  </div>
+                ))}
               </div>
-            ))}
-        </div>
+            )}
+          </aside>
+        </section>
 
-        {/* DONE */}
-        <div className="rounded border bg-gray-50 p-3">
-          <h3 className="font-bold mb-2">Done</h3>
-
-          {tasks
-            .filter((t) => t.status === "done")
-            .map((task) => (
-              <div
-                key={task.id}
-                className="mb-2 rounded bg-white p-2 shadow"
-              >
-                <p>{task.title}</p>
-              </div>
-            ))}
+        <div className="flex flex-wrap gap-4">
+          {project.request_id && <Link href={`/requests/${project.request_id}`} className="text-blue-700 hover:underline">← Вернуться к заявке</Link>}
+          <Link href="/projects" className="text-blue-700 hover:underline">Все проекты</Link>
         </div>
       </div>
-
-      {/* 🧠 ACTIVE TASK DEBUG PANEL */}
-      {activeTask && (
-        <div className="rounded border bg-white p-4 shadow">
-          <h2 className="font-bold">Active Task Execution</h2>
-
-          <pre className="mt-2 text-xs bg-gray-100 p-2 overflow-auto">
-            {JSON.stringify(activeTask, null, 2)}
-          </pre>
-        </div>
-      )}
-
-    </div>
+    </main>
   );
 }
