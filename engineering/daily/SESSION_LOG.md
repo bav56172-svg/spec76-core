@@ -158,3 +158,14 @@
 - Platform Owner утвердил C-006 AI Request Foundation.
 - Подготовлены Capability, ADR и EP-023 AI API Recovery.
 - Следующий шаг: Data Security Foundation после проверки фактической Supabase-схемы.
+
+
+## 2026-08-01 — EP-025 SES-001 Review Governance Extension
+
+- Проверено фактическое состояние GitHub перед изменением.
+- В SES-001 добавлен раздел Pull Request Review Boundary.
+- Уточнена граница ответственности Author, Technical Review и Platform Owner.
+- Подтверждено, что изменение затрагивает только инженерный стандарт.
+- PR №4 объединён через Merge commit `992e3b634c810655ebf02d0444ced9b83af65c67`.
+- Runtime, модель данных, Supabase, миграции и RLS не изменялись.
+- EP-025 завершён.
