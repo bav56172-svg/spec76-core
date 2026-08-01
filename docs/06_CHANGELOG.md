@@ -1,5 +1,21 @@
 # SPEC76 Changelog
 
+## 2026-08-01
+
+### Added
+
+- EP-024 Platform Domain Foundation завершён.
+- Добавлена PROD-compatible Upgrade migration.
+- Выполнена репетиция локального окружения.
+- Выполнена проверка миграции и целостности данных.
+
+### Verification
+
+- Migration: PASS
+- Lint: PASS
+- TypeScript: PASS
+- Production Build: PASS
+
 ## 2026-07-29
 
 ### Fixed

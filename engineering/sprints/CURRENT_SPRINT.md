@@ -16,15 +16,14 @@
 - Platform Owner 2026-07-22 утвердил границы Billing Recovery.
 - Platform Owner 2026-07-31 утвердил ADR-024 и разделение Greenfield migration и Upgrade migration.
 
-## In Progress (в работе)
+## Completed (завершено)
 
-- `SPEC76-EP-024` Platform Domain Foundation — активный инженерный пакет текущей ветки.
+- `SPEC76-EP-024` Platform Domain Foundation — завершён: Upgrade migration, rehearsal, verification, Lint, TypeScript, Production Build и документация проверены.
 - `SPEC76-EP-023` Security and Recovery Engineering Package — общий пакет остаётся в работе; следующий контур AI API Recovery приостановлен до завершения применимых проверок `SPEC76-EP-024`.
 
 ## Next (далее)
 
-- Завершить применимые проверки `SPEC76-EP-024`: архитектурную согласованность, миграции, RLS, SQL-тесты, TypeScript, Production Build и документацию.
-- После утверждения результата `SPEC76-EP-024` вернуться к Data Security Foundation в составе `SPEC76-EP-023` AI API Recovery.
+- Вернуться к Data Security Foundation в составе `SPEC76-EP-023` AI API Recovery.
 - Пользовательский платёжный сценарий проектировать как отдельную Capability (возможность платформы), не включая его автоматически в закрытую границу Billing Recovery.
 
 ## Blockers (блокеры)
