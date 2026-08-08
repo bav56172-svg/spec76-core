@@ -123,6 +123,10 @@ $$;
 -- Verification completed
 -- =====================================================
 
-raise notice 'EP-023 AI Usage RLS verification passed';
+do $$
+begin
+  raise notice 'EP-023 AI Usage RLS verification passed';
+end;
+$$;
 
 rollback;
