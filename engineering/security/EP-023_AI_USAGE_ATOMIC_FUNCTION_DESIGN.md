@@ -2,8 +2,8 @@
 
 | Поле | Значение |
 |---|---|
-| Version (версия) | 0.1 |
-| Status (статус) | Architecture Design |
+| Version (версия) | 0.2 |
+| Status (статус) | Architecture Readiness Update |
 | Owner (владелец) | Platform Owner |
 | Related Release (связанный релиз) | Release 0.4 |
 | Related Capability (связанная возможность) | C-006 AI Request Foundation |
@@ -15,11 +15,13 @@
 
 # Purpose (назначение)
 
-Документ определяет архитектуру будущей атомарной серверной операции для управления AI Usage.
+Документ определяет архитектуру следующего этапа атомарной серверной операции для управления AI Usage.
 
-Документ не создаёт Supabase function (функцию Supabase).
+Базовая таблица `public.ai_usage` уже применена и проверена локально и в основной Supabase базе.
 
-Документ не изменяет существующую модель данных.
+Документ не изменяет уже применённую migration `20260802000100_ep023_ai_usage.sql`.
+
+Все дальнейшие изменения модели допускаются только новой additive migration (добавочной миграцией).
 
 ---
 
@@ -32,8 +34,12 @@
 - ADR-025 утверждён;
 - AI API отсутствует;
 - AI provider не подключён;
-- `ai_usage` отсутствует;
-- RLS реализация не выполнена.
+- `public.ai_usage` существует в основной Supabase базе;
+- EP-023 remote migration execution завершено успешно;
+- RLS и FORCE RLS включены;
+- `authenticated` имеет только SELECT;
+- client write policies отсутствуют;
+- `service_role` имеет server-side write access.
 
 Существующая модель доступа:
 
@@ -151,18 +157,131 @@ reserved → failed
 
 ---
 
+# Required Lifecycle Extension (необходимое расширение lifecycle)
+
+Текущая production schema поддерживает audit logging, но не полный lifecycle, требуемый C-006.
+
+Для atomic reservation/finalization необходима новая additive migration.
+
+Минимально требуемые поля:
+
+- `request_id`;
+- `status`;
+- `completed_at`.
+
+Целевой lifecycle:
+
+```text
+reserved -> completed
+reserved -> failed
+```
+
+Допустимые состояния должны быть ограничены database constraint (ограничением базы данных).
+
+---
+
+# Atomic Operation Contract (контракт атомарной операции)
+
+Server-side operation (серверная операция) должна:
+
+1. получать authenticated user identity из серверного контекста;
+2. принимать `project_id` и `operation_type`;
+3. определять `company_id` через проект;
+4. проверять доступ через существующую project access model;
+5. создавать reservation атомарно;
+6. возвращать идентификатор usage record;
+7. после AI operation переводить reservation в `completed` или `failed`;
+8. не позволять клиенту напрямую выполнять lifecycle transitions.
+
+`user_id` и `company_id` не считаются доверенными клиентскими параметрами.
+
+---
+
+# Concurrency Requirement (требование конкурентности)
+
+Reservation должна создаваться внутри database transaction (транзакции базы данных).
+
+Будущая реализация лимитов не должна использовать небезопасную схему:
+
+```text
+read usage
+-> check limit
+-> separate insert
+```
+
+Проверка лимита и reservation должны выполняться как единая атомарная операция.
+
+---
+
+# Security Boundary (граница безопасности)
+
+Сохраняются действующие ограничения:
+
+- прямой client write запрещён;
+- lifecycle mutation выполняется только server-side;
+- project access проверяется до reservation;
+- пользователь не может подменить `user_id`;
+- пользователь не может подменить `company_id`;
+- полный prompt и полный AI response не сохраняются в `ai_usage`;
+- provider secret не передаётся клиенту.
+
+---
+
+# Additive Migration Requirement (требование добавочной миграции)
+
+Запрещено изменять уже применённую:
+
+```text
+20260802000100_ep023_ai_usage.sql
+```
+
+Следующее изменение схемы оформляется отдельной новой migration.
+
+Migration должна:
+
+- добавлять lifecycle columns без удаления существующих данных;
+- иметь безопасные defaults или staged constraints;
+- добавить необходимые indexes;
+- сохранить действующие RLS controls;
+- пройти local reset/rehearsal;
+- пройти Migration Check;
+- получить отдельный Platform Owner approval до production execution.
+
+---
+
 # Implementation Boundary (граница реализации)
 
-До отдельного Architecture Gate запрещено:
+На текущем этапе разрешено:
 
-- создавать SQL function;
-- создавать Supabase migration;
-- создавать таблицу `ai_usage`;
-- изменять RLS;
-- подключать AI provider.
+- проектирование additive migration;
+- проектирование reserve/finalize SQL functions;
+- подготовка verification tests;
+- подготовка server-side service contract.
+
+До отдельного Architecture Readiness approval запрещено:
+
+- применять новую lifecycle migration в production;
+- подключать AI provider;
+- создавать пользовательский AI API route;
+- вводить финансовые лимиты или billing decisions.
+
+---
+
+# Architecture Readiness Status (статус архитектурной готовности)
+
+```text
+BASE AI_USAGE FOUNDATION: IMPLEMENTED
+REMOTE MIGRATION: VERIFIED
+RLS FOUNDATION: VERIFIED
+ATOMIC LIFECYCLE: DESIGN REQUIRED
+ADDITIVE MIGRATION: REQUIRED
+RUNTIME IMPLEMENTATION: BLOCKED UNTIL LIFECYCLE DESIGN APPROVAL
+```
 
 Следующий этап:
 
-- Migration Design;
-- RLS Implementation Plan;
-- Platform Owner approval.
+1. подготовить additive lifecycle migration design;
+2. определить reserve/finalize function contracts;
+3. подготовить verification plan;
+4. выполнить Architecture Readiness Review;
+5. передать Platform Owner на approval.
