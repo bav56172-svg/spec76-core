@@ -2,8 +2,8 @@
 
 | Поле | Значение |
 |---|---|
-| Version (версия) | 1.0 |
-| Status (статус) | Local Verification Passed |
+| Version (версия) | 1.1 |
+| Status (статус) | Remote Verification Passed |
 | Owner (владелец) | Platform Owner |
 | Related Release (связанный релиз) | Release 0.4 |
 | Related Capability (связанная возможность) | C-006 AI Request Foundation |
@@ -13,9 +13,9 @@
 
 # Purpose (назначение)
 
-Документ фиксирует фактический результат локальной проверки EP-023 AI Usage migration и связанных security controls.
+Документ фиксирует фактический результат локальной и remote проверки EP-023 AI Usage migration и связанных security controls.
 
-Документ не подтверждает выполнение migration в remote или production Supabase.
+Remote migration execution основной Supabase базы подтверждено фактической проверкой после применения migration.
 
 ---
 
@@ -245,6 +245,45 @@ public.projects.title
 
 ---
 
+# Remote Execution Verification (проверка remote execution)
+
+Основная Supabase база:
+
+```text
+project_id = ficjhafnnrznfxgezfay
+status = ACTIVE_HEALTHY
+```
+
+Migration history после выполнения содержит:
+
+```text
+20260809135054 ep023_ai_usage
+```
+
+Подтверждено удалённо:
+
+- `public.ai_usage` существует;
+- `relrowsecurity = true`;
+- `relforcerowsecurity = true`;
+- policy `ai_usage_select_access` существует;
+- policy разрешает `SELECT` роли `authenticated` через `can_access_project(project_id)`;
+- client write policy count для `INSERT`, `UPDATE`, `DELETE` равен `0`;
+- `authenticated` имеет только `SELECT` на `public.ai_usage`;
+- `service_role` имеет полный набор table privileges;
+- foreign keys ведут на `public.projects(id)`, `public.companies(id)` и `auth.users(id)`;
+- существуют индексы `ai_usage_project_created_idx`, `ai_usage_company_created_idx`, `ai_usage_user_created_idx`.
+
+Статус:
+
+```text
+REMOTE MIGRATION EXECUTION: PASSED
+REMOTE SCHEMA VERIFICATION: PASSED
+REMOTE RLS VERIFICATION: PASSED
+CLIENT WRITE PROTECTION: PASSED
+```
+
+---
+
 # Database Impact (влияние на базу)
 
 Local Supabase:
@@ -256,13 +295,13 @@ EP-023 migration applied for verification
 Remote Supabase:
 
 ```text
-NOT CHANGED
+EP-023 migration applied and verified
 ```
 
 Production Supabase:
 
 ```text
-NOT CHANGED
+PRODUCTION DATABASE CHANGE: APPLIED
 ```
 
 ---
@@ -281,7 +320,22 @@ NOT CHANGED
 
 ```text
 LOCAL SECURITY VERIFICATION: PASSED
+REMOTE SECURITY VERIFICATION: PASSED
 ```
+
+---
+
+# Security Advisor Findings (наблюдения Security Advisor)
+
+По `public.ai_usage` новых предупреждений после EP-023 не выявлено.
+
+При этом в основной базе существуют отдельные pre-existing security findings:
+
+- `public.billing_webhook_events`: RLS включён, но policy отсутствует;
+- несколько `SECURITY DEFINER` функций доступны `anon` и/или `authenticated`;
+- leaked password protection отключена.
+
+Эти findings не создавались EP-023 и относятся к отдельному security debt. Исправление их не входит в scope текущего execution record.
 
 ---
 
@@ -296,7 +350,7 @@ LOCAL SECURITY VERIFICATION: PASSED
 
 ИИ не принимал решение о production execution.
 
-Решение о remote и production migration execution принадлежит Platform Owner.
+Remote и production migration execution выполнено после решения Platform Owner.
 
 ---
 
@@ -304,15 +358,18 @@ LOCAL SECURITY VERIFICATION: PASSED
 
 ```text
 LOCAL MIGRATION VERIFICATION: PASSED
-RLS VERIFICATION: PASSED
+LOCAL RLS VERIFICATION: PASSED
 ENGINEERING QUALITY GATE: PASSED
-
-REMOTE MIGRATION EXECUTION: NOT PERFORMED
-PRODUCTION DATABASE CHANGE: NONE
+REMOTE MIGRATION EXECUTION: PASSED
+REMOTE SCHEMA VERIFICATION: PASSED
+REMOTE RLS VERIFICATION: PASSED
+CLIENT WRITE PROTECTION: PASSED
+PRODUCTION DATABASE CHANGE: APPLIED
 ```
 
-Следующий gate:
+Следующий этап:
 
 ```text
-Platform Owner approval for remote migration execution
+EP-023 remote execution documentation closeout
+server-side usage operation integration
 ```
