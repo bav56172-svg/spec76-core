@@ -179,3 +179,16 @@
 - Подтверждено отсутствие влияния на Runtime, модель данных, Supabase, миграции и RLS.
 - Commit `63987c9` отправлен в GitHub.
 - Следующий шаг: продолжение EP-025 / следующий утверждённый архитектурный этап.
+
+## 2026-08-10 — EP-023 AI Usage Lifecycle and Rate Limit
+
+- Platform Owner утвердил реализацию lifecycle migration (миграции жизненного цикла) `ai_usage`.
+- Production preflight подтвердил пустую таблицу, RLS, FORCE RLS и отсутствие клиентской записи.
+- Добавлены `request_id`, `status`, `completed_at`, атомарные `reserve_ai_usage` и `finalize_ai_usage`.
+- Реализован технический лимит `10 запросов за 60 секунд на пользователя` с транзакционной защитой от гонок.
+- Локальная миграция и SQL verification test (SQL-тест проверки) прошли; тестовые данные откатились.
+- Production migration `20260810191040` применена и проверена в Supabase.
+- Новых предупреждений Supabase Security Advisor для новых объектов нет.
+- Lint, TypeScript, Production Build, SQL lint и Diff Check прошли.
+- AI provider и пользовательское выполнение ИИ-операции не включались.
+- Следующий шаг: один защищённый project-scoped AI route (ИИ-маршрут в границе проекта) с обязательными `reserve/finalize`.

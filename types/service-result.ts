@@ -3,6 +3,7 @@ export type ServiceErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "RATE_LIMITED"
   | "FORBIDDEN"
   | "DATABASE_ERROR"
   | "UNKNOWN_ERROR";

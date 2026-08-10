@@ -2,8 +2,8 @@
 
 | Поле | Значение |
 |---|---|
-| Version (версия) | 0.2 |
-| Status (статус) | Architecture Readiness Candidate |
+| Version (версия) | 1.0 |
+| Status (статус) | Implemented and Verified (реализовано и проверено) |
 | Owner (владелец) | Platform Owner |
 | Related Release (связанный релиз) | Release 0.4 |
 | Related Capability (связанная возможность) | C-006 AI Request Foundation |
@@ -15,11 +15,11 @@
 
 # Purpose (назначение)
 
-Документ определяет additive lifecycle migration design (дизайн добавочной миграции жизненного цикла) для `public.ai_usage`.
+Документ определяет additive lifecycle migration design (дизайн добавочной миграции жизненного цикла) для `public.ai_usage` и фиксирует результат его утверждения.
 
 Цель — расширить уже применённую и проверенную базовую модель `ai_usage`, чтобы она поддерживала атомарный lifecycle резервирования и завершения, требуемый C-006 AI Request Foundation.
 
-Документ не создаёт SQL migration (SQL-миграцию), не изменяет runtime code (исполняемый код) и не изменяет production Supabase.
+Реализация design выполнена отдельной SQL migration (SQL-миграцией) `20260810191040_ep023_ai_usage_lifecycle_rate_limit.sql`. Фактический результат записан в `EP-023_AI_USAGE_LIFECYCLE_EXECUTION_RESULT.md`.
 
 ---
 
@@ -38,7 +38,7 @@
 - client write policies для `INSERT`, `UPDATE`, `DELETE` отсутствуют;
 - `service_role` имеет server-side write access;
 - текущая таблица не содержит lifecycle-полей `request_id`, `status`, `completed_at`;
-- production preflight 2026-08-09 подтвердил `public.ai_usage` row count = `0`.
+- production preflight 2026-08-10 подтвердил `public.ai_usage` row count = `0`.
 
 Уже применённая migration:
 
@@ -484,7 +484,7 @@ Lifecycle mutation выполняется только через защищён
 - автоматическое списание денежных средств;
 - автономные агенты;
 - изменение уже применённой migration `20260802000100_ep023_ai_usage.sql`;
-- production execution новой lifecycle migration.
+- подключение AI provider (поставщика ИИ) и выполнение пользовательской ИИ-операции.
 
 ---
 
@@ -514,22 +514,22 @@ Lifecycle mutation выполняется только через защищён
 
 Design считается готовым, когда:
 
-- [ ] согласована lifecycle schema;
-- [ ] согласован empty-table fail-closed preflight;
-- [ ] согласован `request_id` contract;
-- [ ] согласован server identity propagation contract;
-- [ ] согласованы допустимые lifecycle transitions;
-- [ ] согласован reserve contract;
-- [ ] согласован finalize idempotency contract;
-- [ ] согласована concurrency protection;
-- [ ] согласован `SECURITY DEFINER` + fixed `search_path`;
-- [ ] подтверждён `service_role only` execute boundary;
-- [ ] подтверждено сохранение RLS;
-- [ ] подтверждено отсутствие client write access;
-- [ ] подготовлен verification plan;
-- [ ] подготовлен rollback plan;
-- [ ] выполнен Architecture Readiness Review;
-- [ ] получено решение Platform Owner о создании additive migration.
+- [x] согласована lifecycle schema;
+- [x] согласован empty-table fail-closed preflight;
+- [x] согласован `request_id` contract;
+- [x] согласован server identity propagation contract;
+- [x] согласованы допустимые lifecycle transitions;
+- [x] согласован reserve contract;
+- [x] согласован finalize idempotency contract;
+- [x] согласована concurrency protection;
+- [x] согласован `SECURITY DEFINER` + fixed `search_path`;
+- [x] подтверждён `service_role only` execute boundary;
+- [x] подтверждено сохранение RLS;
+- [x] подтверждено отсутствие client write access;
+- [x] подготовлен verification plan;
+- [x] подготовлен rollback plan;
+- [x] выполнен Architecture Readiness Review;
+- [x] получено решение Platform Owner о создании additive migration.
 
 ---
 
@@ -539,21 +539,26 @@ Design считается готовым, когда:
 BASE AI_USAGE FOUNDATION: IMPLEMENTED
 REMOTE BASE MIGRATION: VERIFIED
 RLS FOUNDATION: VERIFIED
-LIFECYCLE MIGRATION: ARCHITECTURE READINESS CANDIDATE
+LIFECYCLE MIGRATION: APPLIED AND VERIFIED
 PRODUCTION AI_USAGE ROW COUNT: 0
-EMPTY-TABLE PREFLIGHT: REQUIRED
+EMPTY-TABLE PREFLIGHT: PASSED
 SERVER IDENTITY CONTRACT: DEFINED
 FUNCTION SECURITY CONTRACT: DEFINED
 FINALIZE IDEMPOTENCY: DEFINED
-SQL MIGRATION: NOT CREATED
-RUNTIME INTEGRATION: NOT STARTED
-PRODUCTION LIFECYCLE CHANGE: NONE
+SQL MIGRATION: 20260810191040 APPLIED
+RATE LIMIT: 10 REQUESTS / 60 SECONDS / USER
+RUNTIME PREFLIGHT: IMPLEMENTED
+ATOMIC RESERVE/FINALIZE SERVICE: IMPLEMENTED
+AI PROVIDER ROUTE INTEGRATION: NOT STARTED
+PRODUCTION LIFECYCLE CHANGE: VERIFIED
 ```
 
 Следующий этап:
 
 ```text
-Architecture Readiness Review
--> Platform Owner decision
--> additive SQL migration implementation
+Protected project-scoped AI route
+-> server-verified actor identity
+-> reserve_ai_usage
+-> provider operation
+-> finalize_ai_usage
 ```
