@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "./lib/supabase";
+import { supabase } from "@/services/supabase";
 
 export default function Home() {
   const [email, setEmail] = useState<string | null>(null);
