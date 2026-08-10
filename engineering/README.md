@@ -20,6 +20,7 @@ SPEC76 OS (инженерная операционная система SPEC76) 
 - [architecture/](architecture/) — архитектурные модели и обзоры.
 - [adr/](adr/) — Architecture Decision Record (запись архитектурного решения).
 - [releases/](releases/) — архитектура и результаты релизов.
+- [roadmap/](roadmap/) — продуктовая и инженерная дорожная карта.
 - [capabilities/](capabilities/) — Capability (возможности платформы).
 - [operations/](operations/) — OP (инженерные операции).
 - [standards/](standards/) — обязательные инженерные стандарты.

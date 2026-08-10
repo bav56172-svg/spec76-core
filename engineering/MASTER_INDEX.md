@@ -35,6 +35,7 @@ SPEC76-<TYPE>-<NUMBER>
 ## L3 — Operations (операции)
 
 - `releases/`
+- `roadmap/` — стратегические продуктовые горизонты; будущие направления не заменяют утверждённые Release и Capability.
 - `capabilities/`
 - `operations/`
 - `packs/` — канонический реестр Engineering Pack находится в `packs/README.md`.
