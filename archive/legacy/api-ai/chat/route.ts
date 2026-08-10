@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { getMemory, saveMemory } from "@/services/ai/memory";
+import { getProjectMemory, saveMemory } from "@/services/ai/memory";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -11,8 +11,7 @@ export async function POST(req: Request) {
   const project = body.project;
   const message = body.message;
 
-  const memoryRes = await getMemory(project.id);
-  const memory = memoryRes.data ?? [];
+  const memory = await getProjectMemory(project.id);
 
   const memoryText = memory
     .map((m) => `- ${m.content}`)
@@ -49,8 +48,16 @@ ${message}
   const reply = completion.choices[0].message.content;
 
   // 🧠 СОХРАНЯЕМ В ПАМЯТЬ ВАЖНЫЕ ФАКТЫ
-  await saveMemory(project.id, message, "user_note");
-  await saveMemory(project.id, reply || "", "ai_note");
+  await saveMemory({
+    projectId: project.id,
+    type: "user_note",
+    content: message,
+  });
+  await saveMemory({
+    projectId: project.id,
+    type: "ai_note",
+    content: reply || "",
+  });
 
   return Response.json({
     reply,

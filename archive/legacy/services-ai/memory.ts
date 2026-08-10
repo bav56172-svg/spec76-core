@@ -1,13 +1,19 @@
 import { supabase } from "@/services/supabase";
 
+interface SaveMemoryInput {
+  projectId: string;
+  type: string;
+  content: string;
+}
+
 /**
  * 🧠 SAVE MEMORY
  */
-export async function saveMemory(
-  projectId: string,
-  type: string,
-  content: string
-) {
+export async function saveMemory({
+  projectId,
+  type,
+  content,
+}: SaveMemoryInput) {
   await supabase.from("ai_memory").insert({
     project_id: projectId,
     type,

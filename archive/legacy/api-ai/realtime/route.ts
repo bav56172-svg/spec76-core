@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { getTasks } from "@/services/tasks";
-import { getMemory } from "@/services/ai/memory";
+import { getProjectMemory } from "@/services/ai/memory";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -17,8 +17,7 @@ export async function POST(req: Request) {
   const tasksRes = await getTasks(project.id);
   const tasks = tasksRes.data ?? [];
 
-  const memoryRes = await getMemory(project.id);
-  const memory = memoryRes.data ?? [];
+  const memory = await getProjectMemory(project.id);
 
   const taskSummary = tasks
     .map((t) => `- ${t.title} [${t.status}]`)

@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getTasks } from "@/services/tasks";
-import { getMemory } from "./memory";
+import type { Project } from "@/types/project";
+import { getProjectMemory } from "./memory";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -10,7 +11,7 @@ const openai = new OpenAI({
  * AI AUTOPILOT (автопилот проекта)
  * анализирует проект как менеджер
  */
-export async function runAutopilot(project: any) {
+export async function runAutopilot(project: Project | null | undefined) {
   if (!project) return null;
 
   // 📦 1. получаем задачи
@@ -18,8 +19,7 @@ export async function runAutopilot(project: any) {
   const tasks = tasksRes.data ?? [];
 
   // 🧠 2. получаем память проекта
-  const memoryRes = await getMemory(project.id);
-  const memory = memoryRes.data ?? [];
+  const memory = await getProjectMemory(project.id);
 
   const taskSummary = tasks
     .map((t) => `- ${t.title} [${t.status}]`)

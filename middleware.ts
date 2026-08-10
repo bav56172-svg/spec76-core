@@ -1,13 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createMiddlewareClient } from "@/lib/supabase/middleware";
 
+const PUBLIC_API_PATHS = new Set([
+  "/api/health",
+  "/api/billing/webhook",
+]);
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  if (
-    pathname === "/api/health" ||
-    pathname === "/api/billing/webhook"
-  ) {
+  if (PUBLIC_API_PATHS.has(pathname)) {
     return NextResponse.next();
   }
 
@@ -15,9 +17,10 @@ export async function middleware(request: NextRequest) {
 
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (error || !user) {
     return NextResponse.json(
       {
         error: "Unauthorized",

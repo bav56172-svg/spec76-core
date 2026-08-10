@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getTasks } from "@/services/tasks";
-import { getMemory } from "./memory";
+import type { Project } from "@/types/project";
+import { getProjectMemory } from "./memory";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -10,14 +11,13 @@ const openai = new OpenAI({
  * AI AUTONOMY ENGINE (автономный интеллект системы)
  * уровень: self-improving system
  */
-export async function runAutonomyEngine(project: any) {
+export async function runAutonomyEngine(project: Project | null | undefined) {
   if (!project) return null;
 
   const tasksRes = await getTasks(project.id);
   const tasks = tasksRes.data ?? [];
 
-  const memoryRes = await getMemory(project.id);
-  const memory = memoryRes.data ?? [];
+  const memory = await getProjectMemory(project.id);
 
   const taskSummary = tasks
     .map((t) => `- ${t.title} [${t.status}]`)

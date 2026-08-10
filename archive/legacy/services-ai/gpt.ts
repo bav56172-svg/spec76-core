@@ -1,13 +1,13 @@
 import OpenAI from "openai";
-import { getMemory } from "./memory";
+import type { Project } from "@/types/project";
+import { getProjectMemory } from "./memory";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-export async function generateTasksWithGPT(project: any) {
-  const memoryRes = await getMemory(project.id);
-  const memory = memoryRes.data ?? [];
+export async function generateTasksWithGPT(project: Project) {
+  const memory = await getProjectMemory(project.id);
 
   const memoryText = memory
     .map((m) => `- ${m.content}`)
