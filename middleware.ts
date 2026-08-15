@@ -11,6 +11,14 @@ function isAiApiPath(pathname: string): boolean {
   return pathname === "/api/ai" || pathname.startsWith("/api/ai/");
 }
 
+// Reserved for Release 0.4 Waves 2–3 (User Experience / Audit) admin
+// surfaces. No route lives under /api/admin/* yet — this establishes the
+// enforcement point now so future admin routes are protected by default
+// instead of needing a per-route check added later.
+function isAdminApiPath(pathname: string): boolean {
+  return pathname === "/api/admin" || pathname.startsWith("/api/admin/");
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -72,6 +80,23 @@ export async function middleware(request: NextRequest) {
             "Retry-After": String(rateLimit.data.retryAfterSeconds),
           },
         },
+      );
+    }
+  }
+
+  if (isAdminApiPath(pathname)) {
+    const { data: hasRole, error: roleError } = await supabase.rpc(
+      "has_platform_role",
+      { allowed_roles: ["moderator", "administrator", "platform_owner"] },
+    );
+
+    if (roleError || !hasRole) {
+      return NextResponse.json(
+        {
+          error: "Forbidden",
+          message: "Недостаточно прав для доступа к этому разделу.",
+        },
+        { status: 403 },
       );
     }
   }
