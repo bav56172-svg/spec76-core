@@ -3,10 +3,8 @@ import type { EntityId, IsoDateTime } from "./common";
 export interface Equipment {
   id: EntityId;
   company_id: EntityId;
-  name: string;
-  category: string;
-  description: string | null;
-  is_available: boolean;
+  equipment_name: string;
   created_at: IsoDateTime;
-  updated_at: IsoDateTime;
 }
+
+export type EquipmentCreateInput = Pick<Equipment, "equipment_name">;
