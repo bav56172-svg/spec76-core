@@ -214,3 +214,29 @@ export async function runContractorMatching(
 
   return serviceSuccess(insertResult.data ?? []);
 }
+
+// OP-023: Contractor Journey — "Доступные заказы".
+//
+// Reads requests from the contractor company's side: only requests where
+// this company has a current match (request_matches.is_current = true)
+// are visible, per the RLS policies added alongside this change. This is
+// intentionally not a raw browse of all open requests — matching stays
+// algorithm-driven (request_analyses / runContractorMatching), and the
+// company only sees what it was actually matched to.
+export async function listAvailableRequestsForCompany(
+  companyId: string,
+): Promise<ServiceResult<(ContractorMatch & { request: Request })[]>> {
+  const { data, error } = await supabase
+    .from("request_matches")
+    .select("*, request:requests(*)")
+    .eq("company_id", companyId)
+    .eq("is_current", true)
+    .order("score", { ascending: false })
+    .returns<(ContractorMatch & { request: Request })[]>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить доступные заказы.");
+  }
+
+  return serviceSuccess(data ?? []);
+}
