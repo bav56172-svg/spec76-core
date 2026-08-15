@@ -3,9 +3,9 @@
 ## Wave 1 — Identity & Access
 
 - EP-024 Platform Domain Foundation (фундамент домена платформы): профили, компании, членство, проекты, Greenfield migration и Upgrade migration. Completed.
-- OP-019 Role Model Foundation (основа ролевой модели).
-- OP-020 Organization Membership (членство в организациях).
-- OP-021 Permission Enforcement (применение разрешений).
+- OP-032 Role Model Foundation (основа ролевой модели). Completed 2026-08-15. Переименовано из OP-019 — конфликт с уже занятым OP-019 (SPEC76 OS Skeleton).
+- OP-033 Organization Membership (членство в организациях). Completed 2026-08-15. Переименовано из OP-020 — конфликт с уже занятым OP-020 (Documentation Standards).
+- OP-021 Permission Enforcement (применение разрешений). Completed 2026-08-15. Номер не менялся — конфликта не было.
 
 ## Wave 2 — User Experience
 

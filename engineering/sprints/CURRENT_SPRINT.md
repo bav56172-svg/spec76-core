@@ -18,9 +18,16 @@
 
 - `SPEC76-EP-024` Platform Domain Foundation — завершён: Upgrade migration, rehearsal, verification, Lint, TypeScript, Production Build и документация проверены.
 - `SPEC76-EP-023` Security and Recovery Engineering Package — общий пакет остаётся в работе; следующий контур AI API Recovery приостановлен до завершения применимых проверок `SPEC76-EP-024`.
+- `SPEC76-ADR-026` слит в `main` вместе с полной инженерной веткой (`engineering/ep-025-ses001-review-governance-extension-v2`, PR не создавался — прямое слияние Platform Owner 2026-08-15) — конституция, ADR, стандарты и реестры перестали быть отдельной веткой.
+- **Release 0.4 / Wave 1 — Identity & Access (2026-08-15):**
+  - `SPEC76-OP-032` Role Model Foundation (основа ролевой модели): таблица `platform_roles`, функция `has_platform_role()`, RLS. Platform Owner (`bav56172@gmail.com`) назначен `platform_owner`. Переименовано из `OP-019` в бэклоге — конфликт нумерации с уже занятым `OP-019` зафиксирован и устранён.
+  - `SPEC76-OP-021` Permission Enforcement (применение разрешений): `services/permissions.ts` (`requirePlatformRole`), защита `/api/admin/*` в `middleware.ts` для `moderator`/`administrator`/`platform_owner`.
+  - `SPEC76-OP-033` Organization Membership (членство в организации): `listCompanyMembers`/`inviteCompanyMember`/`removeCompanyMember` в `services/companies.ts`, приглашение по `user_id` (email-приглашения — отдельная область, не входит).
+  - Lint и TypeScript проверены чистыми на всех трёх PR (#5, #6, #7), смёржены в `main`.
 
 ## Next (далее)
 
+- **Release 0.4 / Wave 2 — User Experience:** путь заказчика, путь исполнителя, кабинет владельца платформы (`Customer Journey`, `Contractor Journey`, `Platform Owner Control Center`) — в работе.
 - Подготовить пакет для профильного российского юриста на основе `SPEC76-ADR-026` и проверенного аудита зависимостей.
 - Определить критерии выбора российского производственного контура без выполнения миграции и без привязки к непроверенному поставщику.
 - Пользовательский платёжный сценарий проектировать как отдельную Capability (возможность платформы) с российским поставщиком, не включая его автоматически в закрытую границу Billing Recovery.
