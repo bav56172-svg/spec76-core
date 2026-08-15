@@ -4,6 +4,7 @@ import {
 } from "@/services/serviceResult";
 import { supabase } from "@/services/supabase";
 import type { Offer, OfferCreateInput } from "@/types/offer";
+import type { Request } from "@/types/request";
 import type { ServiceResult } from "@/types/service-result";
 
 export async function getOffersForRequest(
@@ -62,4 +63,26 @@ export async function acceptOffer(
   }
 
   return serviceSuccess(data as string);
+}
+
+// OP-023: Contractor Journey — "Мои отклики".
+//
+// getOffersForRequest() is scoped to one request (customer-side view of
+// competing offers). This is the contractor-side view: every offer this
+// company has submitted, across all requests, most recent first.
+export async function listCompanyOffers(
+  companyId: string,
+): Promise<ServiceResult<(Offer & { request: Request })[]>> {
+  const { data, error } = await supabase
+    .from("offers")
+    .select("*, request:requests(*)")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .returns<(Offer & { request: Request })[]>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить ваши отклики.");
+  }
+
+  return serviceSuccess(data ?? []);
 }
