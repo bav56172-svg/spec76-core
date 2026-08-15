@@ -8,6 +8,10 @@ import type {
   Company,
   CompanyCreateInput,
 } from "@/types/company";
+import type {
+  CompanyMember,
+  CompanyMemberInviteInput,
+} from "@/types/company-member";
 import type { ServiceResult } from "@/types/service-result";
 
 function createCompanySlug(name: string): string {
@@ -138,4 +142,73 @@ export async function createCompany(
   }
 
   return serviceSuccess(data);
+}
+
+// OP-033: Organization Membership (Wave 1 — Identity & Access).
+//
+// Invitation by user_id only: the invited person must already have an
+// account. Email invitations for people without an account are a
+// separate flow (invitation token + signup) and are intentionally out
+// of scope here — they introduce a new entity (a pending invitation
+// with expiry) and were not approved as part of this change.
+
+export async function listCompanyMembers(
+  companyId: string,
+): Promise<ServiceResult<CompanyMember[]>> {
+  const { data, error } = await supabase
+    .from("company_members")
+    .select("*")
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: true })
+    .returns<CompanyMember[]>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось получить участников компании.");
+  }
+
+  return serviceSuccess(data ?? []);
+}
+
+export async function inviteCompanyMember(
+  input: CompanyMemberInviteInput,
+): Promise<ServiceResult<CompanyMember>> {
+  // Authorization is enforced by the company_members_insert_management
+  // RLS policy (EP-024): only an existing owner/admin of company_id may
+  // insert a new row here. A rejected insert surfaces as a DATABASE_ERROR
+  // below rather than a separate permission check in this function.
+  const { data, error } = await supabase
+    .from("company_members")
+    .insert({
+      company_id: input.company_id,
+      user_id: input.user_id,
+      role: input.role ?? "member",
+    })
+    .select("*")
+    .single<CompanyMember>();
+
+  if (error) {
+    return databaseFailure(error, "Не удалось пригласить участника.");
+  }
+
+  return serviceSuccess(data);
+}
+
+export async function removeCompanyMember(
+  companyId: string,
+  userId: string,
+): Promise<ServiceResult<true>> {
+  // Authorization enforced by company_members_delete_management_or_self
+  // RLS policy: an owner/admin may remove anyone; a member may remove
+  // only themselves (leave the company).
+  const { error } = await supabase
+    .from("company_members")
+    .delete()
+    .eq("company_id", companyId)
+    .eq("user_id", userId);
+
+  if (error) {
+    return databaseFailure(error, "Не удалось удалить участника.");
+  }
+
+  return serviceSuccess(true);
 }

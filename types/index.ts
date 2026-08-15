@@ -4,6 +4,7 @@ export * from "./ai-recommendation";
 export * from "./chat";
 export * from "./common";
 export * from "./company";
+export * from "./company-member";
 export * from "./equipment";
 export * from "./offer";
 export * from "./payment";
