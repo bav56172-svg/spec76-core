@@ -1,515 +1,220 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { supabase } from "@/services/supabase";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCenter,
-} from "@dnd-kit/core";
+  createTask,
+  getTasks,
+  updateTaskStatus,
+} from "@/services/tasks";
+import type { Task, TaskPriority, TaskStatus } from "@/types/task";
+import TaskCard from "./components/TaskCard";
 
-/**
- * 🧠 TYPES
- */
-type Task = {
-  id: string;
-  title: string;
-  status: "todo" | "in_progress" | "done";
-};
-
-type AIAction = {
-  type: string;
-  payload: any;
-};
-
-/**
- * 📦 COLUMNS
- */
-const columns = [
-  { id: "todo", title: "To Do (Сделать)" },
-  { id: "in_progress", title: "In Progress (В работе)" },
-  { id: "done", title: "Done (Готово)" },
+const columns: Array<{ status: TaskStatus; title: string }> = [
+  { status: "todo", title: "Сделать" },
+  { status: "in_progress", title: "В работе" },
+  { status: "review", title: "Проверка" },
+  { status: "done", title: "Готово" },
 ];
 
-/**
- * 🧠 AI HELPERS
- */
-async function improveTask(title: string) {
-  const res = await fetch("/api/ai/improve-task", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
-
-  const data = await res.json();
-  return data.result;
-}
-
-async function breakDownTask(title: string) {
-  const res = await fetch("/api/ai/break-task", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title }),
-  });
-
-  const data = await res.json();
-  return data.tasks as string[];
-}
-
-/**
- * 🟢 PAGE
- */
 export default function TasksPage() {
-  const { id } = useParams();
+  const params = useParams<{ id: string | string[] }>();
+  const projectId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("normal");
+  const [dueAt, setDueAt] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-
-  /**
-   * 🧠 AUTOPILOT STATE
-   */
-  const [autopilot, setAutopilot] = useState<any>(null);
-  const [autoLoading, setAutoLoading] = useState(false);
-
-  /**
-   * ⚡ ACTION EXECUTION STATE
-   */
-  const [actions, setActions] = useState<AIAction[]>([]);
-  const [actionsLoading, setActionsLoading] = useState(false);
-
-  /**
-   * 📦 LOAD TASKS
-   */
   useEffect(() => {
-    loadTasks();
-  }, [id]);
+    let active = true;
 
-  async function loadTasks() {
-    const { data } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("project_id", id);
+    void getTasks(projectId).then(({ data, error: loadError }) => {
+      if (!active) return;
 
-    setTasks((data as Task[]) || []);
-  }
-
-  /**
-   * ➕ CREATE TASK
-   */
-  async function createTask(taskTitle: string) {
-    if (!taskTitle.trim()) return;
-
-    const { data } = await supabase
-      .from("tasks")
-      .insert({
-        project_id: id,
-        title: taskTitle,
-        status: "todo",
-      })
-      .select()
-      .single();
-
-    if (data) {
-      setTasks((prev) => [data as Task, ...prev]);
-    }
-  }
-
-  /**
-   * 🔁 UPDATE STATUS
-   */
-  async function updateStatus(
-    taskId: string,
-    status: Task["status"]
-  ) {
-    await supabase
-      .from("tasks")
-      .update({ status })
-      .eq("id", taskId);
-
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, status } : t
-      )
-    );
-  }
-
-  /**
-   * 🧠 AI GENERATION
-   */
-  async function handleAIGenerate() {
-    if (!aiPrompt.trim()) return;
-
-    setAiLoading(true);
-
-    const res = await fetch("/api/ai/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: aiPrompt,
-        projectId: id,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (Array.isArray(data.tasks)) {
-      for (const t of data.tasks) {
-        await createTask(t);
+      if (loadError) {
+        setError(loadError.message);
+        setTasks([]);
+      } else {
+        setTasks(data ?? []);
       }
-    }
 
-    setAiPrompt("");
-    setAiLoading(false);
-  }
-
-  /**
-   * 🚀 AUTOPILOT
-   */
-  async function runAutopilot() {
-    setAutoLoading(true);
-
-    const res = await fetch("/api/ai/autopilot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: id }),
+      setLoading(false);
     });
 
-    const data = await res.json();
+    return () => {
+      active = false;
+    };
+  }, [projectId]);
 
-    setAutopilot(data);
-    setAutoLoading(false);
-  }
+  const groupedTasks = useMemo(() => {
+    return columns.reduce<Record<TaskStatus, Task[]>>(
+      (accumulator, column) => {
+        accumulator[column.status] = tasks.filter(
+          (task) => task.status === column.status,
+        );
+        return accumulator;
+      },
+      {
+        todo: [],
+        in_progress: [],
+        review: [],
+        done: [],
+        cancelled: [],
+      },
+    );
+  }, [tasks]);
 
-  /**
-   * ⚡ ACTIONS LOADER
-   */
-  async function loadActions() {
-    setActionsLoading(true);
+  async function handleCreateTask() {
+    const normalizedTitle = title.trim();
+    if (!normalizedTitle || saving) return;
 
-    const res = await fetch("/api/ai/actions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: id }),
+    setSaving(true);
+    setError(null);
+
+    const { data, error: createError } = await createTask({
+      project_id: projectId,
+      title: normalizedTitle,
+      priority,
+      due_at: dueAt ? new Date(dueAt).toISOString() : null,
+      position: tasks.length,
     });
 
-    const data = await res.json();
-
-    setActions(data.actions || []);
-    setActionsLoading(false);
-  }
-
-  /**
-   * ⚡ EXECUTE ACTION
-   */
-  async function executeAction(action: AIAction) {
-    switch (action.type) {
-      case "create_task":
-        await createTask(action.payload.title);
-        break;
-
-      case "rename_task":
-        setTasks((prev) =>
-          prev.map((t) =>
-            t.id === action.payload.id
-              ? { ...t, title: action.payload.title }
-              : t
-          )
-        );
-        break;
-
-      case "break_task":
-        const subtasks = await breakDownTask(
-          action.payload.title
-        );
-
-        for (const t of subtasks) {
-          await createTask(t);
-        }
-        break;
+    if (createError) {
+      setError(createError.message);
+    } else if (data) {
+      setTasks((current) => [...current, data]);
+      setTitle("");
+      setPriority("normal");
+      setDueAt("");
     }
 
-    setActions((prev) =>
-      prev.filter((a) => a !== action)
-    );
+    setSaving(false);
   }
 
-  /**
-   * 🧠 DRAG & DROP
-   */
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    })
-  );
+  async function handleStatusChange(taskId: string, status: TaskStatus) {
+    const previousTasks = tasks;
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    updateStatus(
-      active.id as string,
-      over.id as Task["status"]
+    setTasks((current) =>
+      current.map((task) =>
+        task.id === taskId ? { ...task, status } : task,
+      ),
     );
-  }
 
-  /**
-   * 🧠 AI TASK ACTIONS
-   */
-  async function handleImprove(task: Task) {
-    const improved = await improveTask(task.title);
+    const { data, error: updateError } = await updateTaskStatus(taskId, status);
 
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === task.id
-          ? { ...t, title: improved }
-          : t
-      )
-    );
-  }
-
-  async function handleBreakDown(task: Task) {
-    const subtasks = await breakDownTask(task.title);
-
-    for (const t of subtasks) {
-      await createTask(t);
+    if (updateError) {
+      setTasks(previousTasks);
+      setError(updateError.message);
+    } else if (data) {
+      setTasks((current) =>
+        current.map((task) => (task.id === taskId ? data : task)),
+      );
     }
   }
-
-  /**
-   * 📦 GROUPING
-   */
-  const grouped = {
-    todo: tasks.filter((t) => t.status === "todo"),
-    in_progress: tasks.filter(
-      (t) => t.status === "in_progress"
-    ),
-    done: tasks.filter((t) => t.status === "done"),
-  };
 
   return (
-    <div className="space-y-6 p-6">
+    <main className="min-h-screen bg-slate-100 p-4 sm:p-8">
+      <div className="mx-auto max-w-7xl">
+        <Link
+          href={`/projects/${projectId}`}
+          className="text-sm text-blue-700 hover:underline"
+        >
+          ← К рабочему пространству
+        </Link>
 
-      {/* 🧠 AUTOPILOT PANEL */}
-      <div className="rounded-lg border bg-gradient-to-r from-black to-gray-900 p-4 text-white shadow">
-
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold">
-            🧠 AI Autopilot (Автопилот)
-          </h2>
-
-          <button
-            onClick={runAutopilot}
-            className="rounded bg-white px-3 py-1 text-sm text-black"
-          >
-            {autoLoading ? "..." : "Analyze"}
-          </button>
-        </div>
-
-        {autopilot && (
-          <div className="mt-4 space-y-2 text-sm">
-            <div>
-              <div className="text-green-300 font-semibold">
-                Insights (Инсайты)
-              </div>
-              <ul className="list-disc pl-5">
-                {autopilot.insights?.map((i: string, idx: number) => (
-                  <li key={idx}>{i}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="text-red-300 font-semibold">
-                Problems (Проблемы)
-              </div>
-              <ul className="list-disc pl-5">
-                {autopilot.problems?.map((p: string, idx: number) => (
-                  <li key={idx}>{p}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="text-blue-300 font-semibold">
-                Actions (Действия)
-              </div>
-              <ul className="list-disc pl-5">
-                {autopilot.actions?.map((a: string, idx: number) => (
-                  <li key={idx}>{a}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-
-      </div>
-
-      {/* ⚡ ACTION EXECUTION PANEL */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold">
-            ⚡ AI Actions (Выполнение действий)
-          </h2>
-
-          <button
-            onClick={loadActions}
-            className="rounded bg-black px-3 py-1 text-sm text-white"
-          >
-            {actionsLoading ? "..." : "Load"}
-          </button>
-        </div>
-
-        <div className="mt-4 space-y-2">
-
-          {actions.length === 0 && (
-            <p className="text-sm text-gray-500">
-              No actions (нет действий)
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+              Task Engine (движок задач)
             </p>
-          )}
-
-          {actions.map((action, idx) => (
-            <div
-              key={idx}
-              className="flex items-center justify-between rounded border p-2"
-            >
-              <div className="text-sm">
-                <span className="font-bold">
-                  {action.type}
-                </span>
-                <span className="ml-2 text-gray-500">
-                  {JSON.stringify(action.payload)}
-                </span>
-              </div>
-
-              <button
-                onClick={() => executeAction(action)}
-                className="rounded bg-green-600 px-2 py-1 text-xs text-white"
-              >
-                Execute (Выполнить)
-              </button>
-            </div>
-          ))}
-
+            <h1 className="mt-1 text-3xl font-bold">Задачи проекта</h1>
+          </div>
+          <p className="text-sm text-slate-600">Всего задач: {tasks.length}</p>
         </div>
 
-      </div>
+        <section className="mt-6 grid gap-3 rounded-2xl bg-white p-4 shadow-sm md:grid-cols-[1fr_180px_220px_auto]">
+          <input
+            className="rounded-lg border p-3"
+            placeholder="Новая задача"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") void handleCreateTask();
+            }}
+          />
 
-      {/* 🧠 AI GENERATOR */}
-      <div className="rounded-lg border bg-white p-4 shadow">
-
-        <h2 className="mb-2 font-bold">
-          🧠 AI Assistant
-        </h2>
-
-        <div className="flex gap-2">
+          <select
+            className="rounded-lg border p-3"
+            value={priority}
+            onChange={(event) => setPriority(event.target.value as TaskPriority)}
+          >
+            <option value="low">Низкий приоритет</option>
+            <option value="normal">Обычный приоритет</option>
+            <option value="high">Высокий приоритет</option>
+            <option value="urgent">Срочный приоритет</option>
+          </select>
 
           <input
-            className="w-full rounded border p-2"
-            placeholder="Describe project..."
-            value={aiPrompt}
-            onChange={(e) => setAiPrompt(e.target.value)}
+            type="datetime-local"
+            className="rounded-lg border p-3"
+            value={dueAt}
+            onChange={(event) => setDueAt(event.target.value)}
+            aria-label="Срок выполнения"
           />
 
           <button
-            onClick={handleAIGenerate}
-            className="rounded bg-purple-600 px-4 py-2 text-white"
+            type="button"
+            onClick={() => void handleCreateTask()}
+            disabled={saving || !title.trim()}
+            className="rounded-lg bg-slate-900 px-5 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {aiLoading ? "..." : "AI"}
+            {saving ? "Сохраняем..." : "Добавить"}
           </button>
+        </section>
 
-        </div>
+        {error && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
 
-      </div>
+        {loading ? (
+          <p className="mt-8">Загрузка задач...</p>
+        ) : (
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            {columns.map((column) => (
+              <section
+                key={column.status}
+                className="rounded-2xl bg-slate-200/70 p-4"
+              >
+                <h2 className="font-semibold">
+                  {column.title} ({groupedTasks[column.status].length})
+                </h2>
 
-      {/* ➕ CREATE TASK */}
-      <div className="flex gap-2">
+                <div className="mt-4 space-y-3">
+                  {groupedTasks[column.status].map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ))}
 
-        <input
-          className="w-full rounded border p-2"
-          placeholder="New task..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        <button
-          onClick={() => {
-            createTask(title);
-            setTitle("");
-          }}
-          className="rounded bg-black px-4 py-2 text-white"
-        >
-          Add
-        </button>
-
-      </div>
-
-      {/* 📋 KANBAN */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-
-        <div className="grid grid-cols-3 gap-4">
-
-          {columns.map((col) => (
-            <div
-              key={col.id}
-              className="min-h-[400px] rounded-lg bg-gray-100 p-3"
-            >
-
-              <h2 className="mb-3 font-bold">
-                {col.title}
-              </h2>
-
-              {grouped[col.id as keyof typeof grouped].map((task) => (
-                <div
-                  key={task.id}
-                  className="mb-2 rounded bg-white p-3 shadow"
-                >
-
-                  <div className="font-medium">
-                    {task.title}
-                  </div>
-
-                  <div className="mt-3 flex gap-2">
-
-                    <button
-                      onClick={() => handleImprove(task)}
-                      className="rounded bg-blue-500 px-2 py-1 text-xs text-white"
-                    >
-                      Improve (Улучшить)
-                    </button>
-
-                    <button
-                      onClick={() => handleBreakDown(task)}
-                      className="rounded bg-purple-500 px-2 py-1 text-xs text-white"
-                    >
-                      Break down (Разбить)
-                    </button>
-
-                  </div>
-
+                  {groupedTasks[column.status].length === 0 && (
+                    <p className="text-sm text-gray-500">Нет задач</p>
+                  )}
                 </div>
-              ))}
-
-            </div>
-          ))}
-
-        </div>
-
-      </DndContext>
-
-    </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

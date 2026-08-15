@@ -1,44 +1,64 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/services/supabase";
+
+import { requestEmailSignIn } from "@/services/auth";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
 
-  async function signUp() {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-    });
+  async function handleSignIn() {
+    if (submitting) return;
 
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Проверьте почту.");
+    setSubmitting(true);
+    setMessage("");
+
+    try {
+      const { error } = await requestEmailSignIn(email);
+
+      if (error) {
+        setMessage(error.message);
+        return;
+      }
+
+      setMessage("Ссылка для входа отправлена. Проверьте почту.");
+    } catch (error) {
+      console.error("Email sign-in failed:", error);
+      setMessage("Произошла неожиданная ошибка. Повторите попытку.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <main className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="w-[350px] space-y-4 rounded-lg bg-white p-6 shadow">
-        <h1 className="text-3xl font-bold">
-          SPEC76 Login
-        </h1>
+        <h1 className="text-3xl font-bold">Вход в SPEC76</h1>
 
         <input
-  type="email"
-  placeholder="Введите email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  className="w-full border border-gray-400 rounded-md p-3 text-black bg-white"
-/>
+          type="email"
+          placeholder="Введите email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="w-full rounded-md border border-gray-400 bg-white p-3 text-black"
+        />
 
         <button
-          onClick={signUp}
-          className="w-full rounded bg-white p-3 text-black"
+          type="button"
+          onClick={() => void handleSignIn()}
+          disabled={submitting}
+          className="w-full rounded bg-black p-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Войти
+          {submitting ? "Отправляем ссылку..." : "Войти"}
         </button>
+
+        {message ? (
+          <p className="text-sm text-gray-700" role="status">
+            {message}
+          </p>
+        ) : null}
       </div>
     </main>
   );
