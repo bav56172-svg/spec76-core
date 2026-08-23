@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCurrentUserCompany } from "@/services/companies";
 import { supabase } from "@/services/supabase";
 
 export default function Home() {
   const [email, setEmail] = useState<string | null>(null);
-  const [navigationNotice, setNavigationNotice] = useState<string | null>(
-    null,
-  );
+  const [hasCompany, setHasCompany] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -28,6 +27,18 @@ export default function Home() {
       }
 
       setEmail(session?.user.email ?? null);
+
+      if (!session?.user) {
+        return;
+      }
+
+      // Relies on RLS the user already has read access to (EP-024,
+      // already on main) — no new permissions needed for this decision.
+      const companyResult = await getCurrentUserCompany();
+
+      if (!mounted) return;
+
+      setHasCompany(Boolean(companyResult.data));
     }
 
     void loadSession();
@@ -56,8 +67,10 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-100">
       <header className="bg-slate-900 p-6 text-white shadow">
-        <h1 className="text-3xl font-bold">SPEC76 OS</h1>
-        <p className="text-slate-300">AI Construction Platform</p>
+        <h1 className="text-3xl font-bold">SPEC76</h1>
+        <p className="text-slate-300">
+          Заявки на услуги спецтехники — от запроса до сдачи работ
+        </p>
       </header>
 
       <div className="mx-auto max-w-5xl p-8">
@@ -68,62 +81,85 @@ export default function Home() {
             {email ?? "Пользователь не авторизован"}
           </p>
 
-          <button
-            type="button"
-            onClick={signOut}
-            className="mt-6 rounded bg-red-600 px-4 py-2 text-white"
-          >
-            Выйти
-          </button>
+          {email ? (
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-6 rounded bg-red-600 px-4 py-2 text-white"
+            >
+              Выйти
+            </button>
+          ) : (
+            <Link
+              href="/auth"
+              className="mt-6 inline-block rounded bg-blue-600 px-4 py-2 text-white"
+            >
+              Войти
+            </Link>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <Link
-            href="/projects"
-            className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            📁 Проекты
-          </Link>
+        {email ? (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {hasCompany ? (
+              <>
+                <Link
+                  href="/contractor/requests"
+                  className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  📋 Доступные заказы
+                </Link>
+                <Link
+                  href="/contractor/offers"
+                  className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  📨 Мои отклики
+                </Link>
+                <Link
+                  href="/contractor/equipment"
+                  className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  🚜 Моя техника
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/requests/new"
+                  className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  ➕ Разместить заказ
+                </Link>
+                <Link
+                  href="/requests"
+                  className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  📄 Мои заказы
+                </Link>
+              </>
+            )}
 
-          <Link
-            href="/companies"
-            className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            🏢 Компании
-          </Link>
+            <Link
+              href="/projects"
+              className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              📁 Проекты
+            </Link>
 
-          <button
-            type="button"
-            onClick={() =>
-              setNavigationNotice(
-                "Раздел «AI-агенты» пока не входит в текущий релиз SPEC76.",
-              )
-            }
-            className="rounded-xl bg-white p-6 text-left shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            🤖 AI-агенты
-          </button>
+            <Link
+              href="/companies"
+              className="block rounded-xl bg-white p-6 shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+            >
+              🏢 Компании
+            </Link>
 
-          <button
-            type="button"
-            onClick={() =>
-              setNavigationNotice(
-                "Раздел «Настройки» пока не входит в текущий релиз SPEC76.",
-              )
-            }
-            className="rounded-xl bg-white p-6 text-left shadow transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-          >
-            ⚙️ Настройки
-          </button>
-        </div>
-
-        {navigationNotice ? (
-          <p
-            role="status"
-            className="mt-6 rounded-lg border border-slate-200 bg-white p-4 text-slate-700 shadow-sm"
-          >
-            {navigationNotice}
-          </p>
+            {/*
+              TODO(OP-024): add a "Центр управления" link here once
+              /admin and getMyPlatformRole() land on main — held back
+              from this change so main never links to a page that
+              doesn't exist yet on main.
+            */}
+          </div>
         ) : null}
       </div>
     </main>
