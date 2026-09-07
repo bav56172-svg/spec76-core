@@ -1,0 +1,272 @@
+[
+  {
+    "num": 1,
+    "files": [
+      "/Users/andraybalashov/spec76-core/AGENTS.md",
+      "/Users/andraybalashov/spec76-core/CLAUDE.md",
+      "/Users/andraybalashov/spec76-core/README.md",
+      "/Users/andraybalashov/spec76-core/archive/README.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_01.json"
+  },
+  {
+    "num": 2,
+    "files": [
+      "/Users/andraybalashov/spec76-core/docs/00_CORE_PRODUCT_SPEC.md",
+      "/Users/andraybalashov/spec76-core/docs/00_SPEC76_DOMAIN_MODEL.md",
+      "/Users/andraybalashov/spec76-core/docs/01_PRODUCT_VISION.md",
+      "/Users/andraybalashov/spec76-core/docs/01_SPEC76_GLOSSARY.md",
+      "/Users/andraybalashov/spec76-core/docs/02_PRINCIPLES.md",
+      "/Users/andraybalashov/spec76-core/docs/03_FOUNDER_MANIFESTO.md",
+      "/Users/andraybalashov/spec76-core/docs/04_ROADMAP.md",
+      "/Users/andraybalashov/spec76-core/docs/05_ARCHITECTURE.md",
+      "/Users/andraybalashov/spec76-core/docs/06_CHANGELOG.md",
+      "/Users/andraybalashov/spec76-core/docs/06_EXECUTION_FLOW_V1.md",
+      "/Users/andraybalashov/spec76-core/docs/07_REQUIREMENTS_TZ.md",
+      "/Users/andraybalashov/spec76-core/docs/07_SPEC76_DEPLOYMENT_ARCHITECTURE.md",
+      "/Users/andraybalashov/spec76-core/docs/08_SPEC76_MVP_LAUNCH_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/docs/09_REPOSITORY_CLASSIFICATION.md",
+      "/Users/andraybalashov/spec76-core/docs/10_SPEC76_REAL_WORLD_SERVICE_FLOW.md",
+      "/Users/andraybalashov/spec76-core/docs/11_SPEC76_CITY_PILOT_LAUNCH.md",
+      "/Users/andraybalashov/spec76-core/docs/12_SPEC76_FIRST_OPERATING_CITY_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/docs/13_SPEC76_MULTI_CITY_EXPANSION_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/docs/14_SPEC76_NATIONAL_SCALING_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/docs/15_SPEC76_GLOBAL_INFRASTRUCTURE_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/docs/16_SPEC76_CITY_EXECUTION_FOCUS.md",
+      "/Users/andraybalashov/spec76-core/docs/ARCHITECTURE_RULES.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_02.json"
+  },
+  {
+    "num": 3,
+    "files": [
+      "/Users/andraybalashov/spec76-core/docs/engineering/terminal-safety-rule.md",
+      "/Users/andraybalashov/spec76-core/engineering/000_PROJECT_BLUEPRINT.md",
+      "/Users/andraybalashov/spec76-core/engineering/HISTORY.md",
+      "/Users/andraybalashov/spec76-core/engineering/MASTER_INDEX.md",
+      "/Users/andraybalashov/spec76-core/engineering/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/VISION.md",
+      "/Users/andraybalashov/spec76-core/engineering/academy/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-000-engineering-operating-system.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-005-ai-organization.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-006-governed-agent-learning.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-007-human-first-invisible-complexity.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-024_PLATFORM_DOMAIN_FOUNDATION.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-025_PLATFORM_SOVEREIGNTY_AND_AUTONOMOUS_OPERATIONS.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR-026_RUSSIAN_PRODUCTION_DATA_BOUNDARY.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/ADR_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/adr/index.md",
+      "/Users/andraybalashov/spec76-core/engineering/ai/AGENT_GOVERNANCE.md",
+      "/Users/andraybalashov/spec76-core/engineering/ai/AI_AUTHORITY_MATRIX.md",
+      "/Users/andraybalashov/spec76-core/engineering/ai/AI_LEARNING_ARCHITECTURE.md",
+      "/Users/andraybalashov/spec76-core/engineering/ai/AI_PLATFORM_BLUEPRINT.md",
+      "/Users/andraybalashov/spec76-core/engineering/ai/DECISION_MEMORY_STANDARD.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_03.json"
+  },
+  {
+    "num": 4,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/ai/agent-cards/AGENT_CARD_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/architecture/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/capabilities/C-006_AI_REQUEST_FOUNDATION.md",
+      "/Users/andraybalashov/spec76-core/engineering/capabilities/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/constitution/PROJECT_CONSTITUTION.md",
+      "/Users/andraybalashov/spec76-core/engineering/constitution/SPEC76_DIGITAL_CONSTITUTION.md",
+      "/Users/andraybalashov/spec76-core/engineering/daily/DAILY_BRIEF_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/daily/SESSION_LOG.md",
+      "/Users/andraybalashov/spec76-core/engineering/decisions/ADR-001_AI_REQUEST_FOUNDATION.md",
+      "/Users/andraybalashov/spec76-core/engineering/decisions/DECISION_LOG.md",
+      "/Users/andraybalashov/spec76-core/engineering/governance/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/journal/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge-platform/KNOWLEDGE_PLATFORM_ARCHITECTURE.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/glossary/OP-015-documents-terms.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/glossary/OP-016-timeline-terms.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/glossary/OP-017-notifications-terms.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/glossary/OP-018-communication-terms.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/glossary/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/incidents/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/lessons/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/knowledge/patterns/README.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_04.json"
+  },
+  {
+    "num": 5,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/metadata/DOCUMENT_METADATA_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/metadata/DOCUMENT_STATUS_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/metadata/DOCUMENT_VERSIONING_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/metrics/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/onboarding/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-012-project-execution-workspace.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-013-project-activity-engine.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-014-task-engine.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-015-documents-engine.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-016-timeline-milestones.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-017-notifications-engine.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-018-project-communication-platform.md",
+      "/Users/andraybalashov/spec76-core/engineering/operations/OP-020-documentation-standards.md",
+      "/Users/andraybalashov/spec76-core/engineering/packs/EP-021_SPEC76_BUILD_SYSTEM.md",
+      "/Users/andraybalashov/spec76-core/engineering/packs/EP-023_SECURITY_RECOVERY.md",
+      "/Users/andraybalashov/spec76-core/engineering/packs/EP-024_PLATFORM_DOMAIN_FOUNDATION.md",
+      "/Users/andraybalashov/spec76-core/engineering/packs/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/playbook/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/playbook/UX_GATE.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_05.json"
+  },
+  {
+    "num": 6,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/registry/ADR_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/CAPABILITY_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/DOCUMENT_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/OPERATION_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/RELEASE_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/STANDARD_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/registry/TEMPLATE_REGISTRY.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/ARCHITECTURE_IMPACT_ANALYSIS.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/DEMO_CHECKLIST.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/DOMAIN_ROADMAP.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/INTEGRATION_MATRIX.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/RELEASE_BLUEPRINT.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/RELEASE_DEFINITION_OF_DONE.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/RELEASE_NOTES.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.3/RELEASE_REVIEW.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_06.json"
+  },
+  {
+    "num": 7,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/ARCHITECTURE_IMPACT_ANALYSIS.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/CAPABILITY_MAP.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/EP024_PROD_UPGRADE_RUNBOOK.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/RELEASE_BACKLOG.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/RELEASE_BLUEPRINT.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/RELEASE_DEFINITION_OF_DONE.md",
+      "/Users/andraybalashov/spec76-core/engineering/releases/0.4/SPRINT_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/roadmap/MVP_SCOPE.md",
+      "/Users/andraybalashov/spec76-core/engineering/roadmap/ROADMAP.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_07.json"
+  },
+  {
+    "num": 8,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_API_DATA_SECURITY_FOUNDATION.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_API_RECOVERY.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_ARCHITECTURE_READINESS_CHECK.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_ATOMIC_FUNCTION_DESIGN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_DATABASE_INTEGRATION_SPEC.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_EXECUTION_RESULT.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_IMPLEMENTATION_READINESS.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_LIFECYCLE_EXECUTION_RESULT.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_LIFECYCLE_MIGRATION_DESIGN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_MIGRATION_APPROVAL.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_MIGRATION_DESIGN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_MIGRATION_READINESS_REVIEW.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_MIGRATION_REVIEW.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_RLS_TEST_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_RLS_VERIFICATION_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_SCHEMA_DESIGN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_AI_USAGE_SUPABASE_MIGRATION_SPEC.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_BILLING_RECOVERY.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_MIGRATION_EXECUTION_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_PLATFORM_OWNER_APPROVAL.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_PLATFORM_OWNER_APPROVAL_RECORD.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_RUSSIAN_PRODUCTION_DEPENDENCY_AUDIT.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/EP-023_SERVICE_CONTRACT_RECOVERY.md",
+      "/Users/andraybalashov/spec76-core/engineering/security/README.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_08.json"
+  },
+  {
+    "num": 9,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/sprints/CURRENT_SPRINT.md",
+      "/Users/andraybalashov/spec76-core/engineering/sprints/RELEASE_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/CODING_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/DATABASE_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/DEFINITION_OF_DONE.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/DEFINITION_OF_READY.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/GIT_WORKFLOW.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/SECURITY_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/SES-001_ENGINEERING_EXECUTION_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-001_DOCUMENTATION_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-002_MARKDOWN_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-003_README_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-004_ADR_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-005_RELEASE_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-006_OPERATION_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-007_CAPABILITY_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-008_TRACEABILITY_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-009_METADATA_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/standards/STD-010_NAMING_STANDARD.md",
+      "/Users/andraybalashov/spec76-core/engineering/technical-debt/BACKLOG.md",
+      "/Users/andraybalashov/spec76-core/engineering/technical-debt/TECH_DEBT.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_09.json"
+  },
+  {
+    "num": 10,
+    "files": [
+      "/Users/andraybalashov/spec76-core/public/file.svg"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_10.json"
+  },
+  {
+    "num": 11,
+    "files": [
+      "/Users/andraybalashov/spec76-core/public/globe.svg"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_11.json"
+  },
+  {
+    "num": 12,
+    "files": [
+      "/Users/andraybalashov/spec76-core/public/next.svg"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_12.json"
+  },
+  {
+    "num": 13,
+    "files": [
+      "/Users/andraybalashov/spec76-core/public/vercel.svg"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_13.json"
+  },
+  {
+    "num": 14,
+    "files": [
+      "/Users/andraybalashov/spec76-core/public/window.svg"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_14.json"
+  },
+  {
+    "num": 15,
+    "files": [
+      "/Users/andraybalashov/spec76-core/engineering/templates/README.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-001_DOCUMENT_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-002_README_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-003_ADR_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-004_RELEASE_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-005_OPERATION_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-006_CAPABILITY_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-007_STANDARD_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/templates/TPL-008_CHECKLIST_TEMPLATE.md",
+      "/Users/andraybalashov/spec76-core/engineering/traceability/SPEC76_NAMESPACE_CLASSIFICATION_REPORT.md",
+      "/Users/andraybalashov/spec76-core/engineering/traceability/SPEC76_NAMESPACE_MIGRATION_PLAN.md",
+      "/Users/andraybalashov/spec76-core/engineering/traceability/TRACEABILITY_MATRIX.md",
+      "/Users/andraybalashov/spec76-core/engineering/ux/USER_EXPERIENCE_ARCHITECTURE.md",
+      "/Users/andraybalashov/spec76-core/engineering/workplace/README.md",
+      "/Users/andraybalashov/spec76-core/scripts/ap001/README.md"
+    ],
+    "path": "/Users/andraybalashov/spec76-core/graphify-out/.graphify_chunk_15.json"
+  }
+]
