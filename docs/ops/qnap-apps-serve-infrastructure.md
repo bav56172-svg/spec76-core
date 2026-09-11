@@ -99,7 +99,27 @@ QNAP NAS "NAS07275C" (TS-451A, 192.168.1.164)
 - Из-за этого health-check'и отдельных сервисов периодически не укладываются в свой timeout (например у imgproxy: `docker inspect` показывает `"Health check exceeded timeout (5s)"`, хотя сам процесс отвечает нормально) — сервисы "мигают" между healthy/unhealthy не потому что сломаны, а потому что VM физически не успевает ответить на health-check вовремя.
 - PostgREST (`supabase-rest`) в какой-то момент падал с `"canceling statement due to statement timeout"` при попытке загрузить schema cache — тоже эффект перегрузки Postgres конкурентными миграциями, само прошло, когда нагрузка чуть спала.
 
-**Вывод (для будущих сессий):** это НЕ баг конфигурации — это ожидаемое поведение self-hosted Supabase (11 сервисов) на слабой VM (2 vCPU / 4GB) при первом запуске, когда все сервисы одновременно инициализируются. Процесс должен постепенно сойтись сам (по мере того как каждый сервис заканчивает разовую миграцию), просто это может занимать 20-40+ минут вместо обычных 1-2 минут. Если после длительного ожидания часть сервисов (`storage`, `edge-functions`, `meta`) так и не станет healthy — вероятно, реально не хватает ресурсов VM, и решением будет увеличить vCPU/RAM для `apps-serve` через QNAP Virtualization Station (VM нужно будет выключить на время изменения ресурсов).
+**Вывод (для будущих сессий):** это НЕ баг конфигурации — это ожидаемое поведение self-hosted Supabase (11 сервисов) на слабой VM (2 vCPU / 4GB) при первом запуске, когда все сервисы одновременно инициализируются. Процесс должен постепенно сойтись сам (по мере того как каждый сервис заканчивает разовую миграцию), просто это может занимать 20-40+ минут вместо обычных 1-2 минут.
+
+**Практическое решение, которое реально сработало:** когда `realtime` не мог получить подключение к БД и падал в цикл рестартов (`DBConnection.ConnectionError`, connection pool исчерпан) — временная остановка `docker stop realtime-dev.supabase-realtime` сразу же освободила ресурсы, и следом `storage` (до этого 20+ минут не слушал порт) практически сразу стал healthy. После этого `docker compose up -d` (повторно) подняла `realtime` уже без конкуренции — и она успешно смигрировала. **Урок:** при перегрузке лучше остановить один "шумный" сервис и дать остальным дозапуститься, чем ждать вслепую.
+
+Итог: все 11 контейнеров стека в итоге стали healthy/running.
+
+### 3.10 Применение SQL-миграций spec76-core — обнаружен пропущенный набор миграций и один явно неприменимый файл
+
+При первом проходе по `supabase/migrations/*.sql` (9 файлов, по порядку) — 2 миграции упали:
+- `20260801000100_ep024_prod_compatible_upgrade.sql` — `ERROR: column "title" does not exist` (таблица `public.projects`)
+- `20260815010000_op023_contractor_available_requests_rls.sql` — `ERROR: relation "public.request_matches" does not exist`
+
+**Причина:** в репозитории есть ВТОРОЙ, отдельный набор миграций — `database/migrations/*.sql` (11 файлов, `20260712_001_...` — `20260714_011_...`) — которые создают таблицы фич-уровня (`requests`, `request_analyses`, `request_matches`/contractor matching, `offers`, `tasks`, `documents`, `project_activities`, `project_timelines`, `notifications`, `conversations`/messages и т.д.). Несмотря на то, что даты в именах файлов (12-14 июля) РАНЬШЕ дат `supabase/migrations` (19 июля - 15 августа), по факту содержимого — эти файлы должны накатываться МЕЖДУ `supabase/migrations` #4 (`20260728000100_ep024_platform_domain_security_completion.sql`) и #5 (`ep024_prod_compatible_upgrade`), т.к. используют таблицы `companies`/`projects`, которые создаются только в `ep024_platform_domain_foundation` (миграция #2 из `supabase/migrations`).
+
+**Правильный порядок для новой (greenfield) базы:**
+1. `supabase/migrations/` файлы 1-4 (billing_recovery → platform_domain_foundation → security_hardening → security_completion)
+2. **`database/migrations/` все 11 файлов по порядку номеров** (001…011)
+3. `supabase/migrations/` файлы 6-9 (ai_usage → ai_usage_lifecycle_rate_limit → role_model_foundation → contractor_available_requests_rls)
+4. Файл `supabase/migrations/20260801000100_ep024_prod_compatible_upgrade.sql` (#5) — **СОЗНАТЕЛЬНО ПРОПУЩЕН**. Собственный заголовок файла прямо говорит: *"Target baseline: existing PROD companies/projects schema verified on 2026-08-01. This is an Upgrade migration. It must not be used as a substitute for the existing Greenfield migrations on a clean installation."* Это миграция для переноса данных со СТАРОЙ прод-схемы (где у `projects` была колонка `title`) на новую — она не предназначена для новой пустой базы (где `projects.name`, а не `title`, создаётся сразу правильно через greenfield-путь). Применять её к чистой базе не нужно и не имеет смысла.
+
+**Побочный урок:** при повторном прогоне migrations после частичной неудачи простой `DROP TABLE ... CASCADE` для созданных таблиц оказался НЕДОСТАТОЧНЫМ — остались "осиротевшие" функции (15 штук в public-схеме) и триггер `auth_users_create_profile` прямо на `auth.users` (не каскадируется от дропа public-таблиц, т.к. живёт в другой схеме). Пришлось отдельно чистить: `DROP TRIGGER ... ON auth.users`, затем DO-блок, динамически дропающий все функции в public по `pg_proc`. Итоговый результат после исправленного порядка: **24 таблицы в public-схеме, все миграции (кроме сознательно пропущенной #5) применены с EXIT 0.**
 
 ---
 
