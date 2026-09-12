@@ -155,7 +155,7 @@ export default function RequestDetailPage() {
     return (
       <main className="p-8">
         <p className="text-red-700">{errorMessage}</p>
-        <Link href="/projects/new" className="mt-4 inline-block text-blue-700">
+        <Link href="/requests/new" className="mt-4 inline-block text-blue-700">
           Создать новую заявку
         </Link>
       </main>

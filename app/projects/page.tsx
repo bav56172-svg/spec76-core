@@ -59,14 +59,7 @@ export default function ProjectsPage() {
     <main className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Мои заявки</h1>
-
-          <Link
-            href="/projects/new"
-            className="rounded-lg bg-blue-600 px-5 py-3 font-medium text-white hover:bg-blue-700"
-          >
-            Новая заявка
-          </Link>
+          <h1 className="text-3xl font-bold">Проекты компании</h1>
         </div>
 
         {loading ? <p className="mt-8">Загрузка...</p> : null}
@@ -79,7 +72,7 @@ export default function ProjectsPage() {
 
         {!loading && !errorMessage && projects.length === 0 ? (
           <div className="mt-8 rounded-xl bg-white p-6 shadow">
-            Заявок пока нет.
+            Проектов пока нет.
           </div>
         ) : null}
 
