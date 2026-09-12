@@ -167,6 +167,80 @@ QNAP NAS "NAS07275C" (TS-451A, 192.168.1.164)
 - Подтверждено: приложение отвечает `HTTP 200` и по `localhost:3000`, и по `http://192.168.1.108:3000` (сетевой доступ из LAN).
 - Подтверждено: полный путь `приложение → Envoy (8000) → PostgREST → Postgres` рабочий (получен реальный ответ от БД на тестовый запрос к таблице `companies`).
 
+### 3.14 Начало деплоя eceupo: обнаружена и уважена формальная блокировка production-деплоя
+
+Перед стартом работы над eceupo обнаружено, что в `README.md` репозитория задокументировано формальное решение Platform Owner (**EP-020, статус `Defer`**, см. `engineering/architecture/EP-020_PRODUCTION_LAUNCH_DECISION_RECORD.md`), которое **запрещает**: production-деплой, реальные персональные данные, production-базу данных, внешний домен и production-секреты — до нового решения Platform Owner. При этом явно подтверждён как уже одобренный baseline: локальный PostgreSQL и локальный backend.
+
+Это несовместимо с изначальной задачей "задеплоить eceupo на apps-serve" в её буквальном прочтении (apps-serve — внешний сервер, не "локально"). Решение не принималось самостоятельно — вопрос был задан пользователю напрямую, пользователь выбрал вариант **"как локальный/dev-стенд"**: разворачивать на apps-serve приложение и БД eceupo так, будто это тот же самый уже одобренный локальный baseline (dev-креды, без реальных ПДн, без внешнего домена, без "production"-секретов, файлы репозитория используются как есть, без изменений). Все последующие шаги в этом разделе выполнены строго в рамках этого решения.
+
+### 3.15 Доступ к приватному репозиторию eceupo — deploy-ключ (по аналогии с bacey)
+
+На apps-serve сгенерирована отдельная ed25519-пара только для этого репозитория:
+```
+ssh-keygen -t ed25519 -f ~/.ssh/eceupo_deploy_key -N ""
+```
+Публичный ключ зарегистрирован как **read-only** deploy-ключ репозитория `bav56172-svg/eceupo` через `gh repo deploy-key add <pubkey> -R bav56172-svg/eceupo -t "apps-serve"` (выполнено с iMac, где `gh` уже аутентифицирован; флаг `-w/--allow-write` **не** передавался — по умолчанию ключ read-only). В `~/.ssh/config` на apps-serve добавлен алиас:
+```
+Host github.com-eceupo
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/eceupo_deploy_key
+  IdentitiesOnly yes
+```
+Клонирование: `git clone git@github.com-eceupo:bav56172-svg/eceupo.git ~/projects/eceupo` — успешно.
+
+### 3.16 Конфликт портов: eceupo-postgres vs supabase-pooler на 5432 — найден и решён без изменения репозитория
+
+Собственный `docker-compose.yml` репозитория (`eceupo-postgres` + `eceupo-pgadmin`, не менялся) публикует Postgres на хостовый порт **5432:5432**. На apps-serve этот порт **уже занят** — `supabase-pooler` (Supavisor) стека spec76-core давно слушает `0.0.0.0:5432`. Симптом был неочевидным: `docker compose up -d` для eceupo отработал без ошибки и контейнер показывал `healthy`, но backend при подключении к `jdbc:postgresql://localhost:5432/eceupo` получал не "connection refused", а осмысленную ошибку Postgres-протокола: `FATAL: (ENOIDENTIFIER) no tenant identifier provided (external_id or sni_hostname required)` — это фирменная ошибка **Supavisor** (multi-tenant pooler Supabase), а не eceupo-postgres. Т.е. трафик на `localhost:5432` физически уходил в чужой pooler, а не в контейнер eceupo.
+
+**Решение — локальный, НЕ закоммиченный файл `~/projects/eceupo/docker-compose.override.yml`** (лежит только на apps-serve, в `git status` виден как untracked, никогда не добавлялся в `git add`/коммит — репозиторий остаётся ровно таким, каким его одобрил Platform Owner):
+```yaml
+services:
+  postgres:
+    ports: !override
+      - "5433:5432"
+  pgadmin:
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@eceupo-dev.com
+```
+Важный нюанс Docker Compose: обычное указание `ports:` в override-файле **не заменяет**, а **добавляет** к списку портов из базового файла (списки мёржатся конкатенацией) — первая попытка привела к тому, что compose пытался забиндить И 5432, И 5433 одновременно, и снова падал на "port is already allocated". Ключ `!override` (YAML-тег, поддерживается Docker Compose v2.24+, тут используется v5.5.1) явно указывает — **заменить** список, а не дополнить его.
+
+Второй, независимый баг найден тем же способом: `eceupo-pgadmin` уходил в `Exited (1)`, потому что текущий образ `dpage/pgadmin4` проверяет домен в `PGADMIN_DEFAULT_EMAIL` и отклоняет зарезервированные домены из RFC 2606 (`admin@eceupo.test` → "special-use or reserved name"). Через тот же override-файл email заменён на `admin@eceupo-dev.com` (обычный TLD, проверка деliverability отключена — письма реально не отправляются).
+
+После пересоздания (`docker compose up -d`) оба контейнера здоровы: `eceupo-postgres` слушает `0.0.0.0:5433->5432`, `eceupo-pgadmin` стартует без ошибок.
+
+### 3.17 Java 21, сборка и systemd-деплой backend'а eceupo
+
+На apps-serve не было Java вообще (`java: command not found`). Backend требует **Java 21** (см. `pom.xml`, `spring-boot-starter-parent` 3.5.16, `<java.version>21</java.version>`). Установлено: `sudo apt-get install -y openjdk-21-jdk-headless` → **OpenJDK 21.0.12**. Установка заняла ~22 минуты (пакет + все зависимости, включая шрифты/X11-либы для headless-JDK) — на этой перегруженной VM это ожидаемо, не зависание (см. урок из 3.12); в это же время наблюдался очередной всплеск load average до 114 — та же природа, что в 3.11/3.13 (steal-время от соседней VM), самостоятельно прошло после завершения установки.
+
+Сборка: `cd ~/projects/eceupo/backend && ./mvnw clean package -DskipTests` — **BUILD SUCCESS** за 6:34 мин (первая сборка, полная загрузка зависимостей Maven Central с нуля), получен `target/backend-0.0.1-SNAPSHOT.jar` (Spring Boot fat-jar).
+
+Деплой — systemd-юнит `/etc/systemd/system/eceupo-backend.service` (по аналогии с `spec76-core.service`):
+```ini
+[Unit]
+Description=ECEUPO Backend (Spring Boot, dev/local stand)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=agent
+WorkingDirectory=/home/agent/projects/eceupo/backend
+ExecStart=/usr/bin/java -Dspring.datasource.url=jdbc:postgresql://localhost:5433/eceupo -jar /home/agent/projects/eceupo/backend/target/backend-0.0.1-SNAPSHOT.jar
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/eceupo-backend.log
+StandardError=append:/var/log/eceupo-backend.log
+
+[Install]
+WantedBy=multi-user.target
+```
+Порт БД передан через JVM-параметр `-Dspring.datasource.url`, а не правкой `application.yml` — файл репозитория (с портом 5432) остаётся нетронутым; переопределение — чисто apps-serve-специфичное, из-за конфликта портов в 3.16.
+
+**Результат:** приложение стартовало (`Started BackendApplication` — заняло ~5.5 минут при холодном старте под нагрузкой, это нормально для этой VM), Flyway **успешно применил все 4 миграции** (`V1__init_identity`, `V2__init_organization`, `V3__init_people`, `V20260724_01__create_auth_foundation`) к новой базе `eceupo` на порту 5433, создано 16 таблиц. `GET /actuator/health` → `{"status":"UP"}`, `HTTP 200`.
+
+**Известный пробел (не исправлялся — код проекта не менялся, вне рамок инфраструктурной задачи):** `scripts/smoke.sh` из репозитория обращается к `POST /api/people` без аутентификации и получает `HTTP 401`. Причина — в текущем коде `AuthSecurityConfiguration` эндпоинт `/api/people/**` защищён (`httpBasic`, `.authenticated()`), а ни миграции, ни `run.sh`, ни сам `smoke.sh` не создают тестового пользователя автоматически. Похоже, smoke-скрипт не успели обновить вслед за добавлением аутентификации (таблицы `eceupo_user_account`/`identity_user_accounts` пусты после чистых миграций). Это вопрос для команды/владельца продукта — не инфраструктурная проблема и не то, что стоило "чинить" на ходу созданием тестовых пользователей в обход governance-процесса проекта.
+
 ---
 
 ## 4. Текущий статус (обновляется по ходу работы)
@@ -186,11 +260,15 @@ QNAP NAS "NAS07275C" (TS-451A, 192.168.1.164)
 - [x] Приложение доступно из локальной сети: `http://192.168.1.108:3000` → HTTP 200
 - [x] Проверен полный путь до БД: `http://192.168.1.108:8000/rest/v1/companies` (через Envoy → PostgREST → Postgres) отвечает реальным ответом от Postgres (сейчас — ожидаемый `42501 permission denied`, т.к. anon-роль не имеет GRANT на эту таблицу; это вопрос RLS/грантов на уровне схемы, а не инфраструктуры)
 - [x] Исправлен инцидент с healthcheck'ами Supabase (см. 3.11/3.13) — увеличены таймауты, `envoy` больше не блокируется здоровьем `studio`
-- [ ] Поднять отдельный standalone PostgreSQL-контейнер для eceupo (отдельно от стека Supabase)
-- [ ] Получить доступ к приватному репозиторию eceupo на apps-serve (нужен deploy-ключ, добавленный через GitHub UI — по аналогии с bacey/bacey-coordinator)
-- [ ] Применить Flyway-миграции eceupo к новой базе
-- [ ] Задеплоить Spring Boot-приложение eceupo на apps-serve
-- [ ] Занести primary/starting-данные в обе новые базы
+- [x] Уважена формальная блокировка production-деплоя eceupo (EP-020, Defer) — деплой выполнен как локальный/dev-стенд по явному решению пользователя (см. 3.14)
+- [x] Получен доступ к приватному репозиторию eceupo на apps-serve — отдельный read-only deploy-ключ `~/.ssh/eceupo_deploy_key`, алиас `github.com-eceupo` (см. 3.15)
+- [x] Поднят отдельный standalone PostgreSQL + pgAdmin для eceupo (`~/projects/eceupo/docker-compose.yml`, не изменён) — конфликт хостового порта 5432 с `supabase-pooler` решён через untracked `docker-compose.override.yml` (host-порт 5433, см. 3.16)
+- [x] Java 21 (OpenJDK 21.0.12) установлена на apps-serve (см. 3.17)
+- [x] Backend eceupo собран (`./mvnw clean package`, BUILD SUCCESS) и задеплоен как systemd-сервис `eceupo-backend.service` (см. 3.17)
+- [x] Применены все 4 Flyway-миграции eceupo к новой базе (порт 5433) — 16 таблиц созданы автоматически при старте backend'а (`spring.flyway.enabled: true`)
+- [x] `GET /actuator/health` → `{"status":"UP"}`, `HTTP 200`
+- [ ] `scripts/smoke.sh` из репозитория падает с `HTTP 401` на `/api/people` — эндпоинт защищён (`AuthSecurityConfiguration`), а тестового пользователя ни миграции, ни сам скрипт не создают; это вопрос к команде проекта, не инфраструктурная задача (см. 3.17)
+- [ ] Занести primary/starting-данные (dev-only, без реальных ПДн) в обе новые базы — не делалось, требует отдельного решения о том, какие данные и через какой канал (не в рамках "поднять инфраструктуру")
 
 ---
 
@@ -226,3 +304,4 @@ docker compose logs -f <имя_сервиса>
 - `~/projects/supabase-selfhost/docker/` на apps-serve — sparse-checkout официального репозитория `supabase/supabase` (только папка `docker/`) — источник шаблона для self-hosted стека
 - `~/projects/spec76-supabase/` на apps-serve — рабочая копия self-hosted Supabase стека (скопирована из supabase-selfhost/docker через `setup.sh`), здесь `.env` с реальными секретами и `docker-compose.yml`
 - `~/xray/` на apps-serve — прокси Xray (бинарник + конфиг), идентичен `~/xray/` на bacey-serve
+- `~/projects/eceupo/` на apps-serve — полный клон приватного репозитория eceupo (через `github.com-eceupo` deploy-ключ), включая `docker-compose.override.yml` (untracked, только на этом сервере — см. 3.16) и собранный `backend/target/backend-0.0.1-SNAPSHOT.jar`
