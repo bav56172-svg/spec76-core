@@ -9,8 +9,22 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
 const MIGRATIONS_DIR = "supabase/migrations";
-const CREATE_TABLE_RE = /create\s+table\s+(?:if\s+not\s+exists\s+)?("?[\w.]+"?)/gi;
-const ENABLE_RLS_RE = /alter\s+table\s+("?[\w.]+"?)\s+enable\s+row\s+level\s+security/gi;
+// Table identifier: optionally-quoted schema part, optionally followed by
+// ".optionally-quoted-table-part" — matches both `public.orders` and
+// `"public"."orders"` (identifiers with spaces/special chars are out of scope
+// for this basic check).
+const IDENTIFIER = `"?[\\w]+"?(?:\\."?[\\w]+"?)?`;
+const CREATE_TABLE_RE = new RegExp(
+  `create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?(${IDENTIFIER})`,
+  "gi"
+);
+// ALTER TABLE accepts an optional ONLY keyword before the table name
+// (common in pg_dump-style output) — without accounting for it, the regex
+// would capture the literal word "ONLY" as the table name instead.
+const ENABLE_RLS_RE = new RegExp(
+  `alter\\s+table\\s+(?:only\\s+)?(${IDENTIFIER})\\s+enable\\s+row\\s+level\\s+security`,
+  "gi"
+);
 
 function normalize(tableName) {
   const unquoted = tableName.replace(/"/g, "");

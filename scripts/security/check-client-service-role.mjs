@@ -4,12 +4,17 @@
 // and Route Handlers that ship as part of the app bundle) — server-only code that
 // intentionally uses the service role belongs in services/ or lib/supabase/admin.ts.
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, lstatSync } from "node:fs";
 import { join, extname } from "node:path";
 
 const SCAN_DIRS = ["app", "components"];
 const CODE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const PATTERN = /service_role/i;
+// Vendored/build/VCS directories are never client source we need to scan, and
+// walking into them (e.g. a nested node_modules in a workspace layout) would
+// be slow and risks false positives from third-party code that legitimately
+// mentions service_role internally.
+const EXCLUDED_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build"]);
 
 function walk(dir, files = []) {
   let entries;
@@ -19,8 +24,13 @@ function walk(dir, files = []) {
     return files;
   }
   for (const entry of entries) {
+    if (EXCLUDED_DIRS.has(entry)) continue;
     const fullPath = join(dir, entry);
-    const stats = statSync(fullPath);
+    // lstatSync (not statSync) so a symlink is inspected as itself, not
+    // followed — otherwise a cyclic/self-referential symlink would recurse
+    // forever.
+    const stats = lstatSync(fullPath);
+    if (stats.isSymbolicLink()) continue;
     if (stats.isDirectory()) {
       walk(fullPath, files);
     } else if (CODE_EXTENSIONS.has(extname(fullPath))) {
