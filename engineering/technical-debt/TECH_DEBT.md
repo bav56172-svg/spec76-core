@@ -13,7 +13,14 @@ Next.js обнаруживает дополнительный `/Users/andraybala
 
 ## TD-002 — Security automation
 
-Статус: Backlog
+Статус: In Review
 Приоритет: Medium
 
 Добавить GitHub Actions для secret scanning, проверки клиентского использования `service_role`, базового контроля RLS и открытых API.
+
+Реализовано в `.github/workflows/security-checks.yml` (ветка `security/td-002-automation`):
+secret scanning (gitleaks-action), проверка `app/`/`components/` на утечку `service_role`
+(`scripts/security/check-client-service-role.mjs`), базовая сверка `CREATE TABLE` /
+`ENABLE ROW LEVEL SECURITY` по `supabase/migrations` с предупреждением в логе workflow
+(`scripts/security/check-rls.mjs`). Проверка открытых API не реализована — вне шагов,
+поставленных для этой итерации.
