@@ -19,6 +19,16 @@ function isAdminApiPath(pathname: string): boolean {
   return pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 }
 
+// OP-024: the page itself (not just its future API routes) needs
+// server-side protection too — /admin renders a client-side "access
+// denied" fallback, but that alone would still let the page's JS bundle
+// and its data-fetching calls start before the check resolves. Blocking
+// at the edge is a stronger guarantee than the same check happening
+// client-side.
+function isAdminPagePath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
@@ -84,20 +94,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (isAdminApiPath(pathname)) {
+  if (isAdminApiPath(pathname) || isAdminPagePath(pathname)) {
     const { data: hasRole, error: roleError } = await supabase.rpc(
       "has_platform_role",
       { allowed_roles: ["moderator", "administrator", "platform_owner"] },
     );
 
     if (roleError || !hasRole) {
-      return NextResponse.json(
-        {
-          error: "Forbidden",
-          message: "Недостаточно прав для доступа к этому разделу.",
-        },
-        { status: 403 },
-      );
+      if (isAdminApiPath(pathname)) {
+        return NextResponse.json(
+          {
+            error: "Forbidden",
+            message: "Недостаточно прав для доступа к этому разделу.",
+          },
+          { status: 403 },
+        );
+      }
+
+      // Page path: redirect home rather than return raw JSON to a browser.
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
@@ -105,5 +120,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: ["/api/:path*", "/admin/:path*"],
 };
