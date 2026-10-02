@@ -31,9 +31,13 @@
   - `SPEC76-OP-024` Platform Owner Control Center: PR #13 merged 2026-10-02. Миграция `20260816000100_op024_control_center_role_management_rls.sql` (RLS для управления ролями) применена и проверена напрямую на self-hosted Supabase (`apps-serve`) перед слиянием — исходная блокировка (сбой внешнего Supabase) к этому моменту была обойдена наличием собственной инфраструктуры.
   - Подробности и доказательства: `engineering/registry/OPERATION_REGISTRY.md`.
 
+- **Release 0.4 / Wave 3 — Workflow & Audit (OP-026 завершён 2026-10-02):**
+  - `SPEC76-ADR-027` Workflow and Audit Foundation — архитектурное решение (Proposed; Audit-раздел реализован, Workflow-раздел ожидает отдельного PR).
+  - `SPEC76-OP-026` Audit Foundation: таблица `audit_log` + триггер на `platform_roles` — закрывает реальную дыру в безопасности (назначение ролей не фиксировалось с момента OP-024). Применено и проверено на self-hosted Supabase (`apps-serve`), секция "Журнал действий" добавлена в `app/admin/page.tsx`.
+
 ## Next (далее)
 
-- **Release 0.4 / Wave 3 — Workflow & Audit:** `OP-025` Workflow Foundation, `OP-026` Audit Foundation — не начаты.
+- `SPEC76-OP-025` Workflow Foundation — guard-триггеры для `requests.status`/`offers.status`/`projects.status` (решение уже в `ADR-027`), плюс починка рассинхрона `ProjectStatus` (DB CHECK разрешает 5 значений, TS-тип и UI — 7). Следующий PR.
 - Подготовить пакет для профильного российского юриста на основе `SPEC76-ADR-026` и проверенного аудита зависимостей.
 - Определить критерии выбора российского производственного контура без выполнения миграции и без привязки к непроверенному поставщику.
 - **Решение 2026-09-26** (`DECISION_LOG.md`): разработка и тестирование продолжаются на текущем self-hosted стенде (`apps-serve`); **Beget** зафиксирован как целевой production-провайдер на будущее, перенос — только после закрытого пилота и отдельного юридического/архитектурного допуска. Не отменяет требование юридического заключения ниже.
