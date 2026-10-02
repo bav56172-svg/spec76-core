@@ -25,9 +25,15 @@
   - `SPEC76-OP-033` Organization Membership (членство в организации): `listCompanyMembers`/`inviteCompanyMember`/`removeCompanyMember` в `services/companies.ts`, приглашение по `user_id` (email-приглашения — отдельная область, не входит).
   - Lint и TypeScript проверены чистыми на всех трёх PR (#5, #6, #7), смёржены в `main`.
 
+- **Release 0.4 / Wave 2 — User Experience (завершена 2026-10-02):**
+  - `SPEC76-OP-022` Customer Journey: PR #14 (role-aware home page) merged 2026-08-23; PR #9 (fix request/project routing) merged 2026-10-02 после ~1.5 месяцев простоя — typecheck/lint проверены чистыми на актуальном `main`.
+  - `SPEC76-OP-023` Contractor Journey: PR #10, #11, #12 — все merged 2026-08-15.
+  - `SPEC76-OP-024` Platform Owner Control Center: PR #13 merged 2026-10-02. Миграция `20260816000100_op024_control_center_role_management_rls.sql` (RLS для управления ролями) применена и проверена напрямую на self-hosted Supabase (`apps-serve`) перед слиянием — исходная блокировка (сбой внешнего Supabase) к этому моменту была обойдена наличием собственной инфраструктуры.
+  - Подробности и доказательства: `engineering/registry/OPERATION_REGISTRY.md`.
+
 ## Next (далее)
 
-- **Release 0.4 / Wave 2 — User Experience:** путь заказчика, путь исполнителя, кабинет владельца платформы (`Customer Journey`, `Contractor Journey`, `Platform Owner Control Center`) — в работе.
+- **Release 0.4 / Wave 3 — Workflow & Audit:** `OP-025` Workflow Foundation, `OP-026` Audit Foundation — не начаты.
 - Подготовить пакет для профильного российского юриста на основе `SPEC76-ADR-026` и проверенного аудита зависимостей.
 - Определить критерии выбора российского производственного контура без выполнения миграции и без привязки к непроверенному поставщику.
 - **Решение 2026-09-26** (`DECISION_LOG.md`): разработка и тестирование продолжаются на текущем self-hosted стенде (`apps-serve`); **Beget** зафиксирован как целевой production-провайдер на будущее, перенос — только после закрытого пилота и отдельного юридического/архитектурного допуска. Не отменяет требование юридического заключения ниже.
