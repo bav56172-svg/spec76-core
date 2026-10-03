@@ -18,5 +18,7 @@
 | SPEC76-FOUNDATIONAL-AI-TEAM-ARCHITECTURE | `engineering/foundational/AI_TEAM_ARCHITECTURE_ORIGINAL.md` | Historical Source Document |
 | SPEC76-FOUNDATIONAL-AI-AGENTS-DEFINITION | `engineering/foundational/AI_AGENTS_DEFINITION_ORIGINAL.md` | Historical Source Document |
 | SPEC76-FOUNDATIONAL-PLATFORM-ARCHITECTURE-CHAT | `engineering/foundational/PLATFORM_ARCHITECTURE_CHAT_ORIGINAL.md` | Historical Source Document — Bot Gateway (MAX/Telegram/VK), расширенный кабинет владельца платформы, YandexGPT/GigaChat как целевые AI-провайдеры |
+| SPEC76-FOUNDATIONAL-CONSTITUTION-V2 | `engineering/foundational/PROJECT_CONSTITUTION_ORIGINAL.md` | Historical Source Document — **конфликтует** с `engineering/constitution/*.md`, см. раздел "Критическое расхождение" в файле, требует решения Platform Owner |
+| SPEC76-FOUNDATIONAL-ARCHITECTURE-REVIEW-PROCESS | `engineering/foundational/ARCHITECTURE_REVIEW_PROCESS_ORIGINAL.md` | Historical Source Document — **не принят как действующий процесс**, несовместимая нумерация ADR/FR, см. предупреждение в файле |
 
 Этот список не заменяет OP-025 и не претендует на полноту — только фиксирует то, что было явно проверено в рамках сессии 2026-09-26 и 2026-10-03.
