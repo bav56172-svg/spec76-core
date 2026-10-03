@@ -17,5 +17,6 @@
 | SPEC76-FOUNDATIONAL-MASTER-PROMPT | `engineering/foundational/MASTER_PROMPT_ORIGINAL.md` | Historical Source Document (логотип и стек — пересмотрены) |
 | SPEC76-FOUNDATIONAL-AI-TEAM-ARCHITECTURE | `engineering/foundational/AI_TEAM_ARCHITECTURE_ORIGINAL.md` | Historical Source Document |
 | SPEC76-FOUNDATIONAL-AI-AGENTS-DEFINITION | `engineering/foundational/AI_AGENTS_DEFINITION_ORIGINAL.md` | Historical Source Document |
+| SPEC76-FOUNDATIONAL-PLATFORM-ARCHITECTURE-CHAT | `engineering/foundational/PLATFORM_ARCHITECTURE_CHAT_ORIGINAL.md` | Historical Source Document — Bot Gateway (MAX/Telegram/VK), расширенный кабинет владельца платформы, YandexGPT/GigaChat как целевые AI-провайдеры |
 
 Этот список не заменяет OP-025 и не претендует на полноту — только фиксирует то, что было явно проверено в рамках сессии 2026-09-26 и 2026-10-03.
