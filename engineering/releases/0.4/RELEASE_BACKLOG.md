@@ -29,3 +29,7 @@
 - OP-030 AI Operations Foundation (основа ИИ-операций).
 - OP-031 AI Executive Assistant (исполнительный ИИ-помощник).
 - Последующие агенты открываются отдельно после Architecture Gate (архитектурного допуска).
+
+## Wave 6 — Public Catalog (добавлено 2026-10-03 по факту сверки с оригинальным ТЗ)
+
+- OP-034 Public Equipment Catalog (публичный каталог объявлений техники) — модуль «Каталог услуг спецтехники» из `engineering/foundational/TZ_SPEC76_ORIGINAL.md`, раздел 4.1. Не был запланирован ни в одной предыдущей Wave. См. `ADR-028`.
