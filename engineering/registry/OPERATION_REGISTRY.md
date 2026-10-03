@@ -19,6 +19,7 @@
 | OP-029 | Policy Versioning | Not Started | PR не найден |
 | OP-030 | AI Operations Foundation | Not Started | PR не найден |
 | OP-031 | AI Executive Assistant | Not Started | PR не найден |
+| OP-034 | Public Equipment Catalog | Implemented | `ADR-028`. PR #20 (фундамент: схема/RLS/Storage/сервис, merged 2026-10-03) + PR #21 (публичные страницы `/catalog`, `/catalog/[id]`). Найден и восстановлен из `engineering/foundational/TZ_SPEC76_ORIGINAL.md` — не был запланирован ни в одной Wave до 2026-10-03. Анонимная видимость проверена через реальный PostgREST-эндпоинт на `apps-serve`, не только psql |
 
 ## Примечание о слиянии PR #9 и #13 (2026-10-02)
 
