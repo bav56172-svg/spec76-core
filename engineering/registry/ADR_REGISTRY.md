@@ -11,5 +11,6 @@
 | ADR-027 | `engineering/adr/ADR-027_WORKFLOW_AND_AUDIT_FOUNDATION.md` | Accepted | 0.4 / Wave 3 |
 | ADR-028 | `engineering/adr/ADR-028_PUBLIC_EQUIPMENT_CATALOG.md` | Accepted | 0.4 |
 | ADR-029 | `engineering/adr/ADR-029_CUSTOMER_PROJECT_ACCESS.md` | Accepted | 0.4 |
+| ADR-030 | `engineering/adr/ADR-030_COMPLETE_PROJECT.md` | Accepted | 0.4 |
 
 Реестр не должен содержать решения, наличие которых не подтверждено в GitHub.

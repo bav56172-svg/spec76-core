@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getProjectActivities } from "@/services/projectActivities";
-import { getProjectWorkspace } from "@/services/projects";
+import { completeProject, getProjectWorkspace } from "@/services/projects";
+import { supabase } from "@/services/supabase";
 import type { ProjectActivity } from "@/types/project-activity";
 import type { ProjectStatus, ProjectWorkspace } from "@/types/project";
 
@@ -31,6 +32,36 @@ export default function ProjectDetailPage() {
   const [activities, setActivities] = useState<ProjectActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [completing, setCompleting] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
+
+  async function handleComplete() {
+    if (!window.confirm("Завершить проект? Это действие нельзя отменить.")) return;
+
+    setCompleting(true);
+    setCompleteError(null);
+    const result = await completeProject(projectId);
+    setCompleting(false);
+
+    if (result.error) {
+      setCompleteError(result.error.message);
+      return;
+    }
+
+    const [projectResult, activityResult] = await Promise.all([
+      getProjectWorkspace(projectId),
+      getProjectActivities(projectId),
+    ]);
+    if (projectResult.data) setProject(projectResult.data);
+    if (activityResult.data) setActivities(activityResult.data);
+  }
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => {
+      setCurrentUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -95,6 +126,20 @@ export default function ProjectDetailPage() {
               {STATUS_LABELS[project.status]}
             </span>
           </div>
+          {currentUserId === project.owner_id &&
+            (project.status === "active" || project.status === "in_progress") && (
+              <div className="mt-6">
+                <button
+                  type="button"
+                  onClick={() => void handleComplete()}
+                  disabled={completing}
+                  className="rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-white hover:bg-emerald-600 disabled:opacity-60"
+                >
+                  {completing ? "Завершаем..." : "Завершить проект"}
+                </button>
+                {completeError && <p className="mt-2 text-sm text-rose-300">{completeError}</p>}
+              </div>
+            )}
         </header>
 
         <section className="grid gap-4 md:grid-cols-3">

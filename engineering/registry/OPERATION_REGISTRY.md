@@ -21,6 +21,7 @@
 | OP-031 | AI Executive Assistant | Not Started | PR не найден. См. ADR-025 |
 | OP-034 | Public Equipment Catalog | Implemented | `ADR-028`. PR #20 (фундамент: схема/RLS/Storage/сервис, merged 2026-10-03) + PR #21 (публичные страницы `/catalog`, `/catalog/[id]`). Найден и восстановлен из `engineering/foundational/TZ_SPEC76_ORIGINAL.md` — не был запланирован ни в одной Wave до 2026-10-03. Анонимная видимость проверена через реальный PostgREST-эндпоинт на `apps-serve`, не только psql |
 | OP-035 | Customer Project Access | Implemented | `ADR-029`. Миграция `20261003001000_op035_customer_project_access.sql`: удалён неверный триггер `validate_project_owner_membership()`, исправлена RLS на `projects` (SELECT/UPDATE пускают `owner_id = auth.uid()`, по образцу tasks/communication/timeline/documents). Закрывает блокер `accept_offer()` от 2026-10-02 — функция впервые успешно создаёт проект, проверено end-to-end на `apps-serve`: `accept_offer()` вернул `project_id`, заказчик видит проект через RLS, участник компании по-прежнему видит проект |
+| OP-036 | Complete Project | In Progress | `ADR-030`. Миграция `20261004000100_op036_complete_project.sql`: `complete_project()` (только заказчик), guard-триггер на `projects.status`, запись в `audit_log`; кнопка на странице проекта. Основа для OP-037 (отзывы). Проверено на `apps-serve` в транзакции с откатом; миграция на стенде ещё не применена |
 
 ## Примечание о слиянии PR #9 и #13 (2026-10-02)
 
