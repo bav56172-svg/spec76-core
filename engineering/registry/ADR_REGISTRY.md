@@ -9,5 +9,6 @@
 | ADR-025 | `engineering/adr/ADR-025_PLATFORM_SOVEREIGNTY_AND_AUTONOMOUS_OPERATIONS.md` | Approved | Cross-release (сквозное) |
 | ADR-026 | `engineering/adr/ADR-026_RUSSIAN_PRODUCTION_DATA_BOUNDARY.md` | Accepted | 0.4 / Public Production (публичный производственный запуск) |
 | ADR-027 | `engineering/adr/ADR-027_WORKFLOW_AND_AUDIT_FOUNDATION.md` | Accepted | 0.4 / Wave 3 |
+| ADR-028 | `engineering/adr/ADR-028_PUBLIC_EQUIPMENT_CATALOG.md` | Accepted | 0.4 |
 
 Реестр не должен содержать решения, наличие которых не подтверждено в GitHub.
