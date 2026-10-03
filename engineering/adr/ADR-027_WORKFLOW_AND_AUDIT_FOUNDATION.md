@@ -4,12 +4,12 @@
 |---|---|
 | Document ID (идентификатор документа) | SPEC76-ADR-027 |
 | Version (версия) | 1.0 |
-| Status (статус) | Proposed — Audit раздел реализован; Workflow раздел ожидает отдельного PR |
+| Status (статус) | Accepted — обе части (Audit и Workflow) реализованы и проверены |
 | Date (дата) | 2026-10-02 |
 | Owner (владелец) | Platform Owner |
 | Related Release (связанный релиз) | Release 0.4 / Wave 3 |
 | Related Capabilities (связанные возможности) | C-003 Workflow Platform; C-004 Audit Platform |
-| Related Operation (связанная операция) | OP-026 Audit Foundation (эта версия); OP-025 Workflow Foundation (следующий PR) |
+| Related Operation (связанная операция) | OP-026 Audit Foundation; OP-025 Workflow Foundation |
 | Related ADR (связанное архитектурное решение) | ADR-024 Platform Domain Foundation |
 | Evidence (доказательная основа) | `engineering/registry/OPERATION_REGISTRY.md`, применение миграции на `apps-serve` (см. commit log) |
 
@@ -47,11 +47,17 @@ create table public.audit_log (
 
 Чтение `audit_log` — только `platform_owner`/`administrator` (через `has_platform_role()`, тот же RLS-паттерн, что и везде в проекте). Запись — только через `security definer` триггер, без прямой INSERT-политики для пользователей.
 
-### Workflow Foundation (следующий PR, OP-025) — решение зафиксировано здесь заранее
+### Workflow Foundation (OP-025) — пересмотрено по факту при реализации
 
-Не строить общий настраиваемый workflow-движок (нарушило бы собственный стоп-фактор проекта — "не усложнять", `engineering/roadmap/PROJECT_CRITICAL_ASSESSMENT_AND_PLAN.md`, раздел 8) и не вводить enum-типы (нарушило бы единообразный стиль `text + check` во всей схеме). Вместо этого — guard-триггеры по образцу `accept_offer()`, по одному на каждую таблицу со значимым статусом (`requests`, `offers`, `projects`), которые отклоняют любой переход, не входящий в явно перечисленный список легальных. Будет реализовано отдельным PR и дополнит этот ADR.
+Первоначальный план (guard-триггер на каждую таблицу со статусом, с полной картой переходов из декларированной схемы) **изменён** после того, как реализация показала: заявленный в `requests.status` жизненный цикл (`draft → analyzing → published → matching → offers_received → accepted → cancelled/expired`) **нигде не реализован в коде**. Единственный реальный писатель статуса — функция `accept_offer()`, которая переводит заявку прямо из `draft` в `accepted`. Промежуточные статусы существуют только в CHECK-ограничении, ни одна функция их не устанавливает. Строить guard на несуществующую бизнес-логику означало бы закреплять угаданный, непроверенный процесс — решено не делать этого.
 
-Попутно зафиксирована находка: `types/project.ts` (`ProjectStatus`) объявляет 7 значений (включая `published`, `in_progress`), а DB CHECK в `projects` разрешает только 5. UI (`app/projects/[id]/page.tsx`, `STATUS_LABELS`) уже рассчитан на все 7 — значит почитать нужно БД (расширить CHECK), а не UI/TS. Исправление войдёт в PR с Workflow Foundation, вместе с guard-триггером для `projects.status`.
+Вместо этого найдена и закрыта **настоящая** дыра: RLS-политика "Customers can update own draft requests" (`20260729000100_create_requests.sql`) разрешает клиенту обновлять свою заявку в статусе `draft`, но её `with check` проверяет только `customer_id`, не ограничивая целевое значение `status`. То есть заказчик может напрямую выставить `status = 'accepted'` в обход `accept_offer()` — без отклонения конкурирующих предложений и без создания проекта. Реализован guard-триггер `validate_request_status_transition()`, который блокирует прямой переход в `accepted` (разрешён только из `accept_offer()`, через транзакционный GUC-флаг `app.internal_status_transition`) и блокирует любое изменение уже принятой заявки (терминальный статус).
+
+Для `offers` аналогичной активной дыры не найдено — RLS уже ограничивает прямые обновления клиента до `submitted`/`withdrawn`. Добавленный guard `validate_offer_status_transition()` — защита в глубину (terminal-lock на `accepted`/`rejected`/`withdrawn`), а не закрытие активной уязвимости.
+
+Для `projects.status` guard **не добавлен** — ни один код не меняет статус проекта после создания (всегда создаётся как `active` внутри `accept_offer()`, дальше не меняется никем). Нечего охранять; вернуться к этому, когда появится функция завершения/архивации проекта.
+
+Попутно исправлена находка: `types/project.ts` (`ProjectStatus`) объявляет 7 значений (включая `published`, `in_progress`), а DB CHECK в `projects` разрешал только 5. UI (`app/projects/[id]/page.tsx`, `STATUS_LABELS`) уже рассчитан на все 7 — значит чинить нужно было именно CHECK (расширить), а не UI/TS. Исправлено в той же миграции.
 
 ## Альтернативы
 
@@ -70,11 +76,19 @@ create table public.audit_log (
 - Триггер `log_platform_role_audit()` выполняется в той же транзакции, что и изменение роли — ошибка в триггере заблокирует само изменение роли. Триггер написан предельно просто (один `insert`) специально, чтобы минимизировать этот риск.
 - Guard-триггеры (следующий PR) должны быть протестированы на `apps-serve` до слияния — нельзя полагаться только на `typecheck`/`lint`, так как это чисто SQL-уровневая логика.
 
+## Найдено, но НЕ исправлено в этом пакете
+
+При сквозной проверке guard-триггеров на `apps-serve` обнаружен третий, более серьёзный баг — **не исправлен**, так как требует продуктового/архитектурного решения, а не правки опечатки:
+
+`accept_offer()` создаёт `projects` с `company_id = <компания исполнителя>` и `owner_id = <заказчик>`. Но триггер `projects` из `ADR-024`/`EP-024` (`20260724000100_ep024_platform_domain_foundation.sql:253`) требует, чтобы `owner_id` обязательно был членом (`company_members`) той же компании, что и `company_id` проекта. Заказчик никогда не является членом компании исполнителя — то есть **`accept_offer()` структурно не может успешно создать проект ни в одном сценарии**, независимо от guard-триггеров этого пакета. Это существовало и до этого PR (баг не мной внесён), просто стало видно при сквозной проверке через реальный вызов функции.
+
+Это значит, что путь «принять предложение → создать проект» на практике никогда полностью не срабатывал (после починки опечатки `title→name` он доходит до этого триггера и падает). Чинить это — значит отвечать на архитектурный вопрос: должен ли `owner_id` проекта быть заказчиком (и тогда триггер из EP-024 нужно пересмотреть), или компанией-исполнителем (и тогда `accept_offer()` нужно переписывать иначе, причём неясно, как заказчик тогда получает доступ к своему проекту). Это решение за Platform Owner, не за ИИ-агента.
+
 ## Связанные артефакты
 
-- Domain Model: `public.platform_roles` (существующая, не изменяется структурно), `public.audit_log` (новая)
-- Migration: `supabase/migrations/20261002000100_op026_audit_log_foundation.sql`
+- Domain Model: `public.platform_roles` (существующая, не изменяется структурно), `public.audit_log` (новая), guard-триггеры на `public.requests`/`public.offers`, расширенный CHECK на `public.projects.status`
+- Migration: `supabase/migrations/20261002000100_op026_audit_log_foundation.sql`, `supabase/migrations/20261002001000_op025_workflow_status_guards.sql`
 - Types: `types/audit-log.ts`
 - Service: `services/auditLog.ts`
 - UI: `app/admin/page.tsx` (секция "Журнал действий")
-- Tests/Checks: `npm run verify`; ручная проверка на `apps-serve` (см. План)
+- Tests/Checks: `npm run verify`; функциональная проверка на `apps-serve` — audit log (OP-026) и попытки нелегальных переходов статуса, ожидаемо отклонённые (OP-025)
