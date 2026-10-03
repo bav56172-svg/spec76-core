@@ -224,6 +224,12 @@ export default function Home() {
                 >
                   Я исполнитель
                 </Link>
+                <Link
+                  href="/catalog"
+                  className="rounded-xl px-5 py-3.5 font-semibold text-slate-700 underline-offset-4 transition hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                >
+                  Смотреть каталог техники →
+                </Link>
               </div>
             </div>
             <div className="rounded-3xl bg-slate-900 p-6 text-white shadow-xl sm:p-8">

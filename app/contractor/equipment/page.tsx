@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 import { getCurrentUserCompany } from "@/services/companies";
 import {
@@ -189,9 +190,9 @@ export default function MyEquipmentPage() {
           Список техники используется при подборе заказов. Заполните
           категорию, цену, фото и описание, затем опубликуйте — объявление
           появится в публичном каталоге (
-          <a href="/catalog" className="text-blue-600 hover:underline">
+          <Link href="/catalog" className="text-blue-600 hover:underline">
             /catalog
-          </a>
+          </Link>
           ).
         </p>
 
