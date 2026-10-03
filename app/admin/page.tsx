@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { listAuditLog } from "@/services/auditLog";
 import { listCompanies } from "@/services/companies";
 import {
   getMyPlatformRole,
@@ -9,6 +10,7 @@ import {
   setPlatformRole,
 } from "@/services/permissions";
 import { getMyRequests } from "@/services/requests";
+import type { AuditLogEntry } from "@/types/audit-log";
 import type { PlatformRole, PlatformRoleRecord } from "@/types/platform-role";
 
 const ASSIGNABLE_ROLES: PlatformRole[] = [
@@ -26,6 +28,7 @@ export default function AdminControlCenterPage() {
   const [companiesCount, setCompaniesCount] = useState<number | null>(null);
   const [requestsCount, setRequestsCount] = useState<number | null>(null);
   const [roles, setRoles] = useState<PlatformRoleRecord[]>([]);
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
 
   const [newUserId, setNewUserId] = useState("");
   const [newUserRole, setNewUserRole] = useState<PlatformRole>("moderator");
@@ -82,6 +85,22 @@ export default function AdminControlCenterPage() {
         setErrorMessage(rolesResult.error.message);
       } else {
         setRoles(rolesResult.data);
+      }
+
+      // OP-026: audit_log is readable only by administrator/platform_owner
+      // (RLS + requirePlatformRole inside listAuditLog). A moderator would
+      // get FORBIDDEN here, so skip the call entirely rather than surface
+      // a misleading error banner for a section they're not meant to see.
+      if (roleResult.data === "administrator" || roleResult.data === "platform_owner") {
+        const auditResult = await listAuditLog("platform_roles");
+
+        if (!active) return;
+
+        if (auditResult.error) {
+          setErrorMessage(auditResult.error.message);
+        } else {
+          setAuditLog(auditResult.data);
+        }
       }
 
       setLoading(false);
@@ -206,6 +225,48 @@ export default function AdminControlCenterPage() {
             </div>
           ))}
         </div>
+
+        {myRole === "platform_owner" || myRole === "administrator" ? (
+          <>
+            <h2 className="mt-10 text-xl font-semibold">Журнал действий</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Изменения платформенных ролей (OP-026 Audit Foundation).
+            </p>
+
+            <div className="mt-4 space-y-2">
+              {auditLog.length === 0 ? (
+                <p className="text-sm text-gray-500">Записей пока нет.</p>
+              ) : (
+                auditLog.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="rounded-xl bg-white p-4 text-sm shadow"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs text-gray-500">
+                        {new Date(entry.created_at).toLocaleString("ru-RU")}
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-3 py-1">
+                        {entry.action}
+                      </span>
+                    </div>
+                    <p className="mt-2">
+                      Сущность:{" "}
+                      <span className="font-mono">
+                        {entry.entity_type}/{entry.entity_id}
+                      </span>
+                    </p>
+                    {entry.actor_id ? (
+                      <p className="font-mono text-xs text-gray-500">
+                        Исполнитель: {entry.actor_id}
+                      </p>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
     </main>
   );
