@@ -195,6 +195,23 @@ export async function updateProject(
   return serviceSuccess(data);
 }
 
+// OP-036: the only way a project becomes 'completed'. Authorization
+// (customer = projects.owner_id only) and the status guard live in the
+// complete_project() database function, not here.
+export async function completeProject(
+  id: string,
+): Promise<ServiceResult<null>> {
+  const { error } = await supabase.rpc("complete_project", {
+    p_project_id: id,
+  });
+
+  if (error) {
+    return databaseFailure(error, "Не удалось завершить проект.");
+  }
+
+  return serviceSuccess(null);
+}
+
 export async function deleteProject(
   id: string,
 ): Promise<ServiceResult<null>> {
